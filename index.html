@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>THE BORROWED WORLD</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;height:100%;background:#0a0a1a;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#e6e6e6}
+#game{display:flex;flex-direction:column;align-items:center;gap:15px;height:100vh;justify-content:center}
+#ui{display:flex;gap:30px;font-size:18px;padding:10px}
+.stat-value{color:#ffffff;font-weight:bold}
+.choice{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px}
+button{cursor:pointer;background:#6d28d9;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:bold;transition:all 0.2s}
+button:hover{background:#7c3aed;transform:scale(1.03)}
+#dialogues{display:flex;flex-direction:column;gap:12px;max-height:300px;overflow-y:auto;width:600px;padding:15px;background:#1a0e2a;border:2px solid #4a2c6c;border-radius:10px}
+.dialogue{background:#2a1a4a;padding:12px;border-radius:8px;border-left:4px solid #8b5cf6}
+.dialogue.player{color:#c0c0c0;border-left-color:#4ade80}
+.dialogue.lender{color:#fbbf24;border-left-color:#f59e0b}
+.dialogue.narrator{color:#9ca3af;border-left-color:#6b7280}
+.memory-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px}
+.memory-card{border:2px solid #4a2c6c;border-radius:8px;padding:10px;text-align:center;background:#2a1a4a;cursor:pointer;transition:all 0.2s}
+.memory-card.pledged{background:#7c3aed;border-color:#f59e0b;opacity:0.7}
+.memory-card:hover{transform:scale(1.05)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="ui">
+    <div>COLLECTED: <span class="stat-value" id="collected">0/3</span></div>
+    <div>DEBT: <span class="stat-value" id="debt">0</span></div>
+    <div>SCORE: <span class="stat-value" id="score">0</span></div>
+  </div>
+  
+  <div id="choices" class="choice"></div>
+  
+  <div id="dialogues"></div>
+  
+  <div id="memory-display" class="memory-panel hidden"></div>
+</div>
+<script>
+// Game State
+const State = {
+  collected: [],
+  debt: 0,
+  interest: 0,
+  score: 0,
+  step: "intro"
+};
+
+// Memories
+const Memories = [
+  {id: "mother", name: "Mother's Voice", value: 300, description: "The sound of your mother calling you home. It brings comfort."},
+  {id: "home", name: "Childhood Home", value: 200, description: "The place where you first learned to be brave. Walls that knew your footsteps."},
+  {id: "love", name: "The Face of Love", value: 400, description: "The person who believed in you when no one else did. Their eyes held your future."}
+];
+
+// UI Elements
+const dialoguesEl = document.getElementById("dialogues");
+const choicesEl = document.getElementById("choices");
+const memoryDisplayEl = document.getElementById("memory-display");
+const collectedEl = document.getElementById("collected");
+const debtEl = document.getElementById("debt");
+const scoreEl = document.getElementById("score");
+
+// Update UI
+function updateUI(){
+  collectedEl.textContent = State.collected.length+"/"+3;
+  debtEl.textContent = State.debt;
+  scoreEl.textContent = State.score;
+}
+
+// Add dialogue
+function addDialogue(speaker, text, cls="normal"){
+  const div = document.createElement("div");
+  div.className = "dialogue "+cls;
+  div.innerHTML = "<strong>"+speaker+"</strong>: "+text;
+  dialoguesEl.appendChild(div);
+  dialoguesEl.scrollTop = dialoguesEl.scrollHeight;
+}
+
+// Add choice button
+function addChoice(text, callback){
+  const btn = document.createElement("button");
+  btn.textContent = text;
+  btn.onclick = ()=>{ choicesEl.innerHTML=""; callback(); };
+  choicesEl.appendChild(btn);
+}
+
+// Create memory display
+function createMemoryDisplay(){
+  memoryDisplayEl.innerHTML = "<h3>Your Memories (click to inspect)</h3>";
+  Memories.forEach(m => {
+    const card = document.createElement("div");
+    card.className = "memory-card " + (State.collected.includes(m.id) ? "pledged" : "");
+    card.innerHTML = "<div class='memory-name'>"+m.name+"</div><div class='memory-value'>Value: "+m.value+"</div>";
+    card.onclick = () => inspectMemory(m);
+    memoryDisplayEl.appendChild(card);
+  });
+}
+
+function inspectMemory(memory){
+  const div = document.createElement("div");
+  div.className = "dialogue";
+  div.style.background = "rgba(255,255,255,0.9)";
+  div.style.color = "#000";
+  div.style.borderLeftColor = "#8b5cf6";
+  div.innerHTML = "<strong>"+memory.name+"</strong><br>"+memory.description;
+  memoryDisplayEl.appendChild(div);
+  memoryDisplayEl.scrollTop = memoryDisplayEl.scrollHeight;
+}
+
+// Start game
+function start(){
+  addDialogue("Narrator", "In Mnemosyne, memories have value. People borrow against them to live today, but losing that memory changes who they are.", "narrator");
+  addDialogue("Narrator", "Someone has been borrowing against the city's future. Streets fade from everyone's mind - except yours.", "narrator");
+  addDialogue("Lender", "Hello. I am the Keeper of What Was and What Could Be. Your memories are your currency here.", "lender");
+  addDialogue("Lender", "Three memories are pledgable: Mother's Voice, Childhood Home, and The Face of Love. Each holds value... and a key.", "lender");
+  
+  choicesEl.style.display = "flex";
+  addChoice("Meet the Lender", meetLender);
+  addChoice("Explore the City", exploreCity);
+  addChoice("View Your Memories", viewMemories);
+}
+
+// Game scenes
+function meetLender(){
+  choicesEl.innerHTML = ""; dialoguesEl.innerHTML = "";
+  addDialogue("Lender", "State your purpose, borrower.", "lender");
+  addDialogue("Lender", "What memory would you risk to unlock what you need?", "lender");
+  
+  Memories.forEach(m => {
+    if(!State.collected.includes(m.id)){
+      addChoice("Pledge: "+m.name, () => pledgeMemory(m));
+    }
+  });
+  addChoice("I need to think", exploreCity);
+}
+
+function exploreCity(){
+  choicesEl.innerHTML = ""; dialoguesEl.innerHTML = "";
+  addDialogue("Narrator", "The city streets shimmer. Some places feel... empty. As if no one remembers them.", "narrator");
+  addDialogue("Narrator", "You find a letter in an abandoned library. It hints at a secret passage.", "narrator");
+  addDialogue("Narrator", "But the wall here feels solid. Maybe you need a memory to open it...", "narrator");
+  
+  choicesEl.style.display = "flex";
+  addChoice("Return to Lender", meetLender);
+  addChoice("Check Memories", viewMemories);
+}
+
+function viewMemories(){
+  choicesEl.innerHTML = ""; choicesEl.style.display = "none";
+  memoryDisplayEl.classList.remove("hidden");
+  
+  if(State.collected.length > 0){
+    addDialogue("Narrator", "Your pledged memories fade from everyday recollection, but their value remains in your account.", "narrator");
+    addChoice("Return to Lender", meetLender);
+    addChoice("Continue Exploring", exploreCity);
+  }
+}
+
+// Pledge memory
+function pledgeMemory(memory){
+  choicesEl.innerHTML = ""; choicesEl.style.display = "none";
+  State.collected.push(memory.id);
+  State.debt++;
+  State.interest += memory.value;
+  State.score += memory.value;
+  
+  addDialogue("Lender", "Your "+memory.name+" is now pledged as collateral.", "lender");
+  addDialogue("Lender", "Interest accrues at 5% per cycle. Be careful with defaults.", "lender");
+  
+  updateUI();
+  
+  setTimeout(()=>{
+    choicesEl.style.display = "flex";
+    addChoice("Continue Exploring", exploreCity);
+    if(State.debt >= 2){
+      addChoice("View Debt Account", viewDebt);
+    }
+  }, 1500);
+}
+
+function viewDebt(){
+  choicesEl.innerHTML = "";
+  addDialogue("Lender", "Current Debt: "+State.debt, "lender");
+  addDialogue("Lender", "Accumulated Interest: "+State.interest, "lender");
+  
+  addChoice("Continue Exploring", exploreCity);
+  if(Math.random() > 0.5){
+    addChoice("Attempt Repayment", attemptRepay);
+  }
+}
+
+function attemptRepay(){
+  choicesEl.innerHTML = "";
+  if(Math.random() > 0.4){
+    addDialogue("Lender", "You negotiate a partial repayment. The debt decreases.", "lender");
+    State.debt = Math.max(0, State.debt - 1);
+    State.interest = Math.max(0, State.interest - 50);
+  }else{
+    addDialogue("Lender", "The negotiation goes poorly. You end up owing more.", "lender");
+    State.debt += 1;
+    State.interest += 50;
+    State.score -= 50;
+  }
+  updateUI();
+  
+  setTimeout(()=>{
+    choicesEl.style.display = "flex";
+    addChoice("Continue Exploring", exploreCity);
+  }, 1500);
+}
+
+// Start the game
+createMemoryDisplay();
+updateUI();
+start();
+</script>
+</body>
+</html>
