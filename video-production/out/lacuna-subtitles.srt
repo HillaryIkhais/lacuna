@@ -1,25 +1,25 @@
 1
-00:00:00,000 --> 00:00:07,000
+00:00:00,000 --> 00:00:07,900
 Every city has a history. But what happens
 when its people can no longer remember it?
 
 2
-00:00:07,000 --> 00:00:10,000
+00:00:07,900 --> 00:00:13,300
 Here, even the past has a price.
 
 3
-00:00:10,000 --> 00:00:17,000
+00:00:13,300 --> 00:00:24,700
 Somewhere in this city, someone is borrowing
 against its future. And the truth is buried
 in the memories people have already surrendered.
 
 4
-00:00:17,000 --> 00:00:22,000
+00:00:24,700 --> 00:00:33,600
 Your memories can buy you time. But the lender
 only sees what they can be sold for.
 
 5
-00:00:22,000 --> 00:00:34,000
+00:00:33,600 --> 00:00:50,300
 But a memory is more than collateral.
 Your mother's voice can reveal a hidden truth.
 Your childhood home can uncover something the
@@ -27,38 +27,35 @@ city has buried. The face you remember can open
 doors that money alone cannot.
 
 6
-00:00:34,000 --> 00:00:39,000
-Some things are worth more while you still
-have them.
+00:00:50,300 --> 00:00:57,800
+Some things are worth more while you still have them.
 
 7
-00:00:39,000 --> 00:00:43,000
-And time is not on your side. Every cycle
-adds to what you owe.
+00:00:57,800 --> 00:01:05,500
+And time is not on your side.
+Every cycle adds to what you owe.
 
 8
-00:00:43,000 --> 00:00:52,000
+00:01:05,500 --> 00:01:07,800
 Still, the city has not forgotten everything.
 Every clue brings you closer to the truth.
-Every memory you keep may reveal something
-the others cannot.
 
 9
-00:00:52,000 --> 00:00:59,000
+00:01:07,800 --> 00:01:15,600
 You can settle the debt. You can reclaim what
 you pledged. But the choices you made have already
 shaped the journey.
 
 10
-00:00:59,000 --> 00:01:03,000
-Because the question was never just what
-your memories were worth.
+00:01:15,600 --> 00:01:21,500
+Because the question was never just what your
+memories were worth.
 
 11
-00:01:03,000 --> 00:01:07,000
+00:01:21,500 --> 00:01:25,000
 It was what you were willing to lose to discover
 the truth.
 
 12
-00:01:07,000 --> 00:01:11,000
+00:01:25,000 --> 00:01:56,000
 LACUNA. The price of remembering.
