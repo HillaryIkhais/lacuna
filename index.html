@@ -209,7 +209,7 @@ canvas#world{display:block;width:100%;height:100%;cursor:crosshair}
       </div>
       <h2>Zoud GameLab 2026</h2>
       <h1>LACUNA</h1>
-      <p>Memories are collateral. Memories are capabilities. <br>What you pledge to borrow, you lose the power to use.</p>
+      <p>Memories are collateral. Memories are capabilities. <br>Borrow against them, and you may lose the power to repay.</p>
       <button class="btn big" id="btnStart">Enter the District</button>
     </div>
 
@@ -372,6 +372,7 @@ function E_new(){
     evidence:[], used:{},
     started:false, ended:null,
     sealPaid:false,
+    archiveTollPaid:false,
     heldColor:"#e0b866",
     log:[]
   };
@@ -458,6 +459,13 @@ function E_repay(St){
 function E_travel(St, to){
   var g = E_gate(St, to);
   if(!g.ok) return g;
+  if(to === "archive" && !St.archiveTollPaid){
+    var toll = E_has(St,"home") ? ARCHIVE_TOLL : ARCHIVE_TOLL * 2;
+    if(St.money < toll)
+      return {ok:false, msg:"The archive demands a toll of "+toll+" coin. You have "+St.money+".", cls:"bad"};
+    St.money -= toll;
+    St.archiveTollPaid = true;
+  }
   St.area = to;
   St.px = AREAS[to].start.x;
   St.py = AREAS[to].start.y;
@@ -470,7 +478,8 @@ function E_gate(St, to){
   return {ok:true};
 }
 
-var SEAL_FEE = 300;
+var SEAL_FEE = 500;
+var ARCHIVE_TOLL = 100;
 
 function E_paySeal(St){
   if(St.sealPaid) return {ok:false, msg:"The seal is already paid."};
@@ -486,7 +495,6 @@ function E_win(St){
   if(St.area !== "tower") return {ok:false, msg:"You must be at the bell."};
   if(St.loan || St.debt > 0) return {ok:false, msg:"The bell will not sound through debt. Settle the account first."};
   if(St.evidence.length < 2) return {ok:false, msg:"The bell has nothing true to say yet. Bring at least 2 pieces of evidence."};
-  if(!St.tookLoan) return {ok:false, msg:"The Lender holds this district's seal. They will not release the bell to someone who never dealt with them."};
   if(!St.sealPaid) return {ok:false, msg:"The seal fee of "+SEAL_FEE+" coin is unpaid. The Lender does not open this door for free."};
   return {ok:true};
 }
@@ -509,13 +517,13 @@ var INTER = {
   }},
 
   fountain: {once:true, run:function(St){
-    St.money += 50;
-    return {msg:"A single coin, still in the dry basin. +50 coin.", cls:"good"};
+    St.money += 30;
+    return {msg:"A few coins, still in the dry basin. +30 coin.", cls:"good"};
   }},
 
   coatstall: {once:true, run:function(St){
-    St.money += 150;
-    return {msg:"You sell your coat. +150 coin. You will be cold later; later is not now.", cls:"good"};
+    St.money += 100;
+    return {msg:"You sell your coat. +100 coin. You will be cold later; later is not now.", cls:"good"};
   }},
 
   seller: {once:true, needAny:["voice","love"], run:function(St){
@@ -886,10 +894,15 @@ function renderActions(){
   if(sp){
     if(sp.kind === "exit"){
       var g = E_gate(S, sp.to);
+      var tollText = "";
+      if(sp.to === "archive" && !S.archiveTollPaid){
+        var toll = E_has(S,"home") ? ARCHIVE_TOLL : ARCHIVE_TOLL * 2;
+        tollText = " (toll: "+toll+" coin)";
+      }
       var b1 = document.createElement("button");
       b1.className = "act" + (g.ok ? "" : " warn");
-      b1.innerHTML = "Go to " + AREAS[sp.to].name + (g.ok ? "" : "<em>" + g.msg + "</em>");
-      b1.disabled = !g.ok;
+      b1.innerHTML = "Go to " + AREAS[sp.to].name + tollText + (g.ok ? "" : "<em>" + g.msg + "</em>");
+      b1.disabled = !g.ok || (sp.to === "archive" && !S.archiveTollPaid && S.money < (E_has(S,"home") ? ARCHIVE_TOLL : ARCHIVE_TOLL * 2));
       b1.onclick = interact;
       box.appendChild(b1);
     } else if(sp.kind === "npc" && sp.id === "lender"){
@@ -1016,9 +1029,14 @@ function updateHud(){
 
   var hint = $("hint");
   if(NEAR && !S.ended){
-    hint.textContent = NEAR.kind === "exit" ? "E · go to " + AREAS[NEAR.to].name
+    var hintText = NEAR.kind === "exit" ? "E · go to " + AREAS[NEAR.to].name
       : NEAR.kind === "npc" ? "E · speak to " + NEAR.label
       : "E · inspect " + NEAR.label;
+    if(NEAR.kind === "exit" && NEAR.to === "archive" && !S.archiveTollPaid){
+      var toll = E_has(S,"home") ? ARCHIVE_TOLL : ARCHIVE_TOLL * 2;
+      hintText += " · toll "+toll+" coin";
+    }
+    hint.textContent = hintText;
     hint.style.display = "block";
   } else hint.style.display = "none";
 }
@@ -1937,10 +1955,25 @@ function runTests(){
     return !E_win(x).ok;
   });
 
-  t("cannot win without ever borrowing", function(){
+  t("can win without ever borrowing", function(){
     var x = E_new(); x.started = true; x.area = "tower";
+    x.money = 700;  // enough for seal + archive toll without debt
+    x.sealPaid = true;
+    x.archiveTollPaid = true;
     x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"}];
-    return !E_win(x).ok;
+    return E_win(x).ok && x.loan === null;
+  });
+
+  t("winning without borrowing yields a positive ending", function(){
+    var x = E_new(); x.started = true; x.area = "tower";
+    x.money = 700;
+    x.sealPaid = true;
+    x.archiveTollPaid = true;
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"},{id:"c",name:"C"}];
+    if(!E_win(x).ok) return false;
+    x.ended = "win";
+    var e = E_ending(x);
+    return e === "remembered" || e === "newledger";
   });
 
   t("winning after clean settlement yields a positive ending", function(){
@@ -1957,6 +1990,59 @@ function runTests(){
     var x = E_new(); x.started = true;
     x.pledged = ["voice","home"];        // love remains
     return E_gate(x,"tower").ok && !E_gate(x,"tower").msg;
+  });
+
+  t("archive toll is charged when entering archive", function(){
+    var x = E_new(); x.started = true; x.money = 500;
+    var r = E_travel(x,"archive");
+    return r.ok && x.money === 500 - ARCHIVE_TOLL && x.archiveTollPaid === true;
+  });
+
+  t("archive toll is double when home is pledged", function(){
+    var x = E_new(); x.started = true; x.money = 500;
+    x.pledged = ["home"];
+    var r = E_travel(x,"archive");
+    return r.ok && x.money === 500 - ARCHIVE_TOLL * 2 && x.archiveTollPaid === true;
+  });
+
+  t("archive toll is blocked when funds are short", function(){
+    var x = E_new(); x.started = true; x.money = 50;
+    var r = E_travel(x,"archive");
+    return !r.ok && x.archiveTollPaid === false && x.money === 50;
+  });
+
+  t("collateral trap: borrow, lose income, cannot repay", function(){
+    var x = E_new(); x.started = true; x.area = "square";
+    // Pledge voice + home (500 collateral), keep love
+    var loan = E_takeLoan(x, ["voice","home"]);
+    if(!loan.ok) return false;
+    // Money: 100 + 400 = 500. Pay archive toll (home pledged → 200) → 300
+    var travel = E_travel(x,"archive");
+    if(!travel.ok || x.money !== 300) return false;
+    // Pay seal fee 500 → can't afford
+    var seal = E_paySeal(x);
+    if(seal.ok) return false;  // should be blocked
+    // Can't earn seller (voice pledged) or ledger (home pledged)
+    // Only backroom (love kept) gives +100 → 400, still short of 500 seal
+    var backroom = E_interact(x,"backroom");
+    if(!backroom.ok || x.money !== 400) return false;
+    // Still can't pay seal → trapped with debt
+    seal = E_paySeal(x);
+    return seal.ok === false && x.loan !== null && x.debt > 0;
+  });
+
+  t("free path: keep all memories, earn enough without borrowing", function(){
+    var x = E_new(); x.started = true; x.area = "tower"; x.money = 100;
+    // fountain 30 + coat 100 + seller 200 (voice) + ledger 250 (home) + backroom 100 (love) = 780
+    x.money += 30 + 100 + 200 + 250 + 100;
+    // Pay archive toll 100 + seal 500 = 600 → left 180, no debt
+    x.money -= ARCHIVE_TOLL + SEAL_FEE;
+    x.sealPaid = true;
+    x.archiveTollPaid = true;
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"},{id:"c",name:"C"}];
+    var result = x.money === 180 && x.loan === null && E_win(x).ok;
+    if(!result) console.log("DEBUG free path: money="+x.money+", ARCHIVE_TOLL="+ARCHIVE_TOLL+", SEAL_FEE="+SEAL_FEE+", win="+E_win(x).ok+", loan="+!!x.loan);
+    return result;
   });
 
   var pass = out.filter(function(o){ return o.pass; }).length;
