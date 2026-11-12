@@ -45,8 +45,8 @@
 
 ### 0:45–1:00 — Investigation with what remains
 **Visual:** Back in the square, speak to the Tired Seller. Love is held, so the seller trusts the player.  
-**Text:** "Face of Love is held. The seller recognises you and hands over the confession — +200 coin, evidence."  
-**Action:** Evidence counter goes 0 → 1. Then walk to market back room (Love grants trust), read Original Contract. Evidence → 2.
+**Text:** "Face of Love is held. The seller recognises you and hands over the confession — +200 coin via voice, +100 via love. Evidence."  
+**Action:** Evidence counter goes 0 → 1. Then walk to market back room (Love grants trust), read Original Contract. Evidence → 2. Backroom advance +100 coin.
 
 ### 1:00–1:15 — Repayment
 **Visual:** Return to Lender. HUD shows money 500, debt 400. Click "Repay 400 coin."  
@@ -54,17 +54,17 @@
 **Action:** Ledger shows all three memories "Held" again. Capabilities restored: listen, recall, trust.
 
 ### 1:15–1:30 — Complete the investigation
-**Visual:** Now enter the Sunken Archive (Home restored). Copy Ledger of Erasures (+250 coin, evidence), read Torn Testimony on shelves. Evidence → 4.
+**Visual:** Now enter the Sunken Archive (Home restored). Pay archive toll 100 coin. Copy Ledger of Erasures (+250 coin, evidence), read Torn Testimony on shelves. Evidence → 4.
 
 ### 1:30–1:45 — The seal fee
 **Visual:** Walk to Bell Tower. Approach the seal.  
-**Text:** "Release of seal: 300 coin."  
-**Action:** Click "Pay the seal fee (300 coin)." HUD seal flips to "Paid."
+**Text:** "Release of seal: 500 coin."  
+**Action:** Click "Pay the seal fee (500 coin)." HUD seal flips to "Paid."
 
 ### 1:45–2:00 — Resolution
 **Visual:** Ring the bell.  
 **Text:** "The New Ledger — you kept every memory, settled the account, and brought the deed to the bell."  
-**Ending screen:** stats (coin 450, evidence 5/5, cycle 0, memories 3/3). Fade to LACUNA title and repo URL.
+**Ending screen:** stats (coin 500, evidence 5/5, cycle 0, memories 3/3). Fade to LACUNA title and repo URL.
 
 ---
 
@@ -72,5 +72,5 @@
 
 - Record at 1080p, 30fps, browser full-window.
 - Use `window.LACUNA.advance(ms)` if frame timing is inconsistent during recording; do not speed up gameplay artificially.
-- All numbers on screen must match the actual engine: principal 400, rate 10%, seal 300, evidence 5 max, endings as implemented.
+- All numbers on screen must match the actual engine: principal 400, rate 10%, seal fee 500, archive toll 100, fountain 30, coat 100, evidence 5 max, endings as implemented.
 - Do not add Arabic localization text — localization was deliberately deprioritized in favor of accessibility.

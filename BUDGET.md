@@ -47,17 +47,19 @@ LACUNA is implemented as a single self-contained HTML file with no external depe
 | Source / cost | Amount |
 |---|---|
 | Starting coin | ₡100 |
-| Fountain (Forgotten Square) | +₡50 |
-| Coat stall (Forgotten Square) | +₡150 |
-| Tired Seller (Forgotten Square) | +₡200 |
-| Ledger of Erasures (Sunken Archive) | +₡250 |
+| Fountain (Forgotten Square) | +₡30 |
+| Coat stall (Forgotten Square) | +₡100 |
+| Tired Seller (Forgotten Square) | +₡200 (voice) / +₡100 (love) |
+| Back room advance (Memory Market) | +₡100 (love) |
+| Ledger of Erasures (Sunken Archive) | +₡250 (home) |
+| Archive entry toll (Sunken Archive) | ₡100 (₡200 if home pledged) |
 | Loan principal (Memory Market) | +₡400 |
 | Loan interest | 10% per cycle, compounded |
 | Loan deadline | Cycle 4 |
-| Seal fee (Bell Tower) | ₡300 |
+| Seal fee (Bell Tower) | ₡500 |
 | Memory collateral values | Voice ₡300 / Home ₡200 / Love ₡400 |
 
-**Verified playable economy:** A clean playthrough collects ₡750 from exploration plus a ₡400 loan, repays ₡400, pays the ₡300 seal fee, and finishes with ₡450 remaining. The ₡700 required (repayment + seal) is reachable within the interest deadline; dawdling past cycle 4 triggers default.
+**Verified playable economy:** Maximum free income: ₡100 + ₡30 + ₡100 + ₡200 + ₡250 + ₡100 = ₡780. Costs: archive toll ₡100 + seal fee ₡500 = ₡600. Winning without borrowing leaves ₡180, debt-free. Borrowing ₡400 creates liquidity but sacrifices productive income — pledge voice+home and you lose ₡450 in earning potential, making repayment of ₡440+ impossible. The collateral trap is real: borrow to cover costs, lose the income needed to repay, default and lose memories permanently.
 
 ---
 

@@ -20,8 +20,8 @@ Open `index.html` in any browser. No build step, no server required.
 
 - **Move:** WASD / arrow keys, or click the ground.
 - **Interact:** Press `E` near anything that glows.
-- **Loan:** Speak to the Lender in the Memory Market. Inspect the terms (principal ₡400, 10% interest per cycle, 4-cycle deadline, max two memories pledged) before signing.
-- **Win:** Reach the Bell Tower, settle your debt, pay the ₡300 seal fee, bring at least 2 pieces of evidence, and ring the bell.
+- **Loan:** Speak to the Lender in the Memory Market. Inspect the terms (principal ₡400, 10% interest per cycle, 4-cycle deadline, max two memories pledged) before signing. Borrowing is optional — not required to win.
+- **Win:** Reach the Bell Tower, settle your debt, pay the ₡500 seal fee, bring at least 2 pieces of evidence, and ring the bell.
 
 ## Submission contents
 
@@ -34,7 +34,7 @@ Open `index.html` in any browser. No build step, no server required.
 
 ## Verification
 
-The engine is deterministic (no RNG) and self-testing. Open the game and click **Tests** in the HUD, or open the browser console and run `window.LACUNA.tests()` — 18/18 pass, covering:
+The engine is deterministic (no RNG) and self-testing. Open the game and click **Tests** in the HUD, or open the browser console and run `window.LACUNA.tests()` — 24/24 pass, covering:
 
 - Cannot pledge all three memories (`maxPledged = 2`)
 - Collateral must reach ₡500 minimum
@@ -42,17 +42,20 @@ The engine is deterministic (no RNG) and self-testing. Open the game and click *
 - Interest compounds exactly once per cycle
 - Repayment restores memories and clears the balance
 - Default repossesses the highest-value collateral permanently
+- Archive toll: charged when entering, double if home pledged, blocked when funds short
+- **Collateral trap:** borrow, lose productive income, cannot repay → default
+- **Free path:** keep all memories, earn enough without borrowing → win debt-free
 - A player can still reach a valid ending after losing any one memory
 - Seal fee is required and charged exactly once
 
 ## Judge's path (best ending)
 
 1. Forgotten Square: collect the inscription, fountain coin, coat-stall coin, and the seller's confession (keep Face of Love so you're recognised).
-2. Memory Market: borrow ₡400 against Mother's Voice + Childhood Home (keep Face of Love).
+2. Memory Market: borrow ₡400 against Mother's Voice + Childhood Home (keep Face of Love) — or skip the loan and earn freely.
 3. Read the Original Contract in the back room (Face of Love grants trust).
 4. Repay the loan — both memories return.
-5. Sunken Archive: copy the Ledger of Erasures (+₡250) and the Torn Testimony.
-6. Bell Tower: pay the ₡300 seal fee, ring the bell → **The New Ledger** ending.
+5. Pay the archive entry toll (Childhood Home recognises the shortcut), copy the Ledger of Erasures (+₡250), read the Torn Testimony.
+6. Bell Tower: pay the ₡500 seal fee, ring the bell → **The New Ledger** ending.
 
 ## Competition details
 

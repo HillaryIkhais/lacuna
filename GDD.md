@@ -49,7 +49,9 @@ This is not a debt dashboard pasted onto a fantasy game. The financial system an
 | Seal fee | ₡300 (paid at Bell Tower before winning) |
 | Starting coin | ₡100 |
 
-**Money economy (verified playable):** start ₡100 + fountain ₡50 + coat ₡150 + seller ₡200 + ledger ₡250 + loan ₡400 = ₡1,150 available vs ₡700 required (₡400 repayment + ₡300 seal). Dawdling into late cycles causes default because interest compounds while income sources are one-time.
+**Money economy (verified playable):** start ₡100 + fountain ₡30 + coat ₡100 + seller ₡200 (voice) / ₡100 (love) + ledger ₡250 (home) + backroom ₡100 (love) = ₡780 maximum free income. Costs: archive toll ₡100 + seal fee ₡500 = ₡600. Winning without borrowing leaves ₡180. Borrowing ₡400 against memories creates liquidity but sacrifices productive income — pledge the wrong memory and you cannot repay the ₡440+ debt. Interest compounds at 10% per cycle; deadline cycle 4, then repossession.
+
+**The collateral trap:** Borrowing is optional, not mandatory. But if you pledge income-generating memories to cover costs, you may lose the ability to earn enough to repay. Default permanently repossesses your highest-value memory.
 
 **No randomness.** No random repayment outcomes. Interest, repayment, repossession, and win conditions are fully deterministic and unit-tested.
 
@@ -59,12 +61,12 @@ This is not a debt dashboard pasted onto a fantasy game. The financial system an
 
 | Ending | Requirements |
 |---|---|
-| **The New Ledger** | No default, all 3 memories held, ≥4 evidence, includes contract, seal paid, loan taken |
-| **The Remembered City** | No default, ≥3 evidence, seal paid, loan taken |
+| **The New Ledger** | No default, all 3 memories held, ≥4 evidence, includes contract, seal paid |
+| **The Remembered City** | No default, ≥3 evidence, seal paid |
 | **The Forgotten City** | Default or <3 evidence, but reaches tower |
 | **The Account Closes (Broke)** | No memories left to pledge and no way to pay |
 
-Winning requires: loan settled, seal fee paid, ≥2 evidence, taken a loan at least once, at least one memory held.
+Winning requires: debt settled, seal fee paid, ≥2 evidence, at least one memory held. Borrowing is optional.
 
 ---
 
@@ -72,25 +74,26 @@ Winning requires: loan settled, seal fee paid, ≥2 evidence, taken a loan at le
 
 **Forgotten Square (hub)**
 - Worn statue → inscription evidence
-- Dry fountain → +₡50 coin
-- Coat stall → +₡150 coin
-- Tired Seller → +₡200 coin + confession evidence (needs voice or love)
-- Exits: market road, cellar stair (needs home), tower road
+- Dry fountain → +₡30 coin
+- Coat stall → +₡100 coin
+- Tired Seller → +₡200 coin (voice) / +₡100 coin (love) + confession evidence
+- Exits: market road, cellar stair (needs home for full payout), tower road
 
 **Memory Market**
 - The Lender → loan modal (terms, pledge, sign, repay)
 - Loan counter → loan terms readout
-- Back room → Original Contract evidence (needs love)
+- Back room → Original Contract evidence + +₡100 advance (needs love)
 - Exit: square
 
 **Sunken Archive**
-- Ledger of Erasures → ledger evidence + +₡250
+- Entry toll: ₡100 (₡200 if Childhood Home is pledged — you don't recognize the shortcut)
+- Ledger of Erasures → ledger evidence + +₡250 (needs home)
 - Drowned shelves → Torn Testimony evidence
 - Exit: square
 
 **Bell Tower**
-- Seal → seal info + seal fee payment (₡300)
-- Bell → win check (debt settled, evidence ≥2, loan taken, seal paid)
+- Seal → seal info + seal fee payment (₡500)
+- Bell → win check (debt settled, evidence ≥2, seal paid)
 
 ---
 
@@ -106,7 +109,7 @@ Winning requires: loan settled, seal fee paid, ≥2 evidence, taken a loan at le
 
 ## 8. Verification
 
-The engine is exposed as `window.LACUNA` with `engine.*` (loan, accrue, repay, repo, gate, win, ending, interact, held, cap, seal) and `tests()`. 18 self-tests run in-browser via the **Tests** button and cover financial correctness, memory permissions, collateral limits, repossession, seal fee, win preconditions, and the no-dead-end guarantee (any single memory is sufficient to reach the tower).
+The engine is exposed as `window.LACUNA` with `engine.*` (loan, accrue, repay, repo, gate, win, ending, interact, held, cap, seal) and `tests()`. 24 self-tests run in-browser via the **Tests** button and cover financial correctness, memory permissions, collateral limits, repossession, seal fee, archive toll, the collateral trap (borrow → lose income → cannot repay), the free path (win without borrowing), win preconditions, and the no-dead-end guarantee (any single memory is sufficient to reach the tower).
 
 ---
 
