@@ -5,217 +5,1523 @@
 <title>LACUNA</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-html,body{margin:0;height:100%;background:#0a0a1a;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#e6e6e6}
-#game{display:flex;flex-direction:column;align-items:center;gap:15px;height:100vh;justify-content:center}
-#ui{display:flex;gap:30px;font-size:18px;padding:10px}
-.stat-value{color:#ffffff;font-weight:bold}
-.choice{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px}
-button{cursor:pointer;background:#6d28d9;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:bold;transition:all 0.2s}
-button:hover{background:#7c3aed;transform:scale(1.03)}
-#dialogues{display:flex;flex-direction:column;gap:12px;max-height:300px;overflow-y:auto;width:600px;padding:15px;background:#1a0e2a;border:2px solid #4a2c6c;border-radius:10px}
-.dialogue{background:#2a1a4a;padding:12px;border-radius:8px;border-left:4px solid #8b5cf6}
-.dialogue.player{color:#c0c0c0;border-left-color:#4ade80}
-.dialogue.lender{color:#fbbf24;border-left-color:#f59e0b}
-.dialogue.narrator{color:#9ca3af;border-left-color:#6b7280}
-.memory-panel{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px}
-.memory-card{border:2px solid #4a2c6c;border-radius:8px;padding:10px;text-align:center;background:#2a1a4a;cursor:pointer;transition:all 0.2s}
-.memory-card.pledged{background:#7c3aed;border-color:#f59e0b;opacity:0.7}
-.memory-card:hover{transform:scale(1.05)}
-.hidden{display:none}
+:root{
+  --bg:#07060f; --panel:#12102a; --panel2:#1b1838; --line:#352d63;
+  --ink:#eae7ff; --dim:#948bc4; --gold:#f0b95a; --violet:#8b5cf6;
+  --good:#4ade80; --bad:#f87171; --lock:#f0a83a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:Georgia,'Times New Roman',serif;overflow:hidden}
+#app{max-width:980px;margin:0 auto;height:100vh;display:flex;flex-direction:column;
+  padding:8px 10px;gap:6px}
+
+#hud{display:flex;gap:13px;align-items:center;flex-wrap:wrap;font-size:12px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 11px}
+.stat{display:flex;gap:5px;align-items:baseline;white-space:nowrap}
+.stat b{font-size:15px;color:#fff}
+.stat span{color:var(--dim);font-size:9.5px;text-transform:uppercase;letter-spacing:1.3px}
+.stat.debt b{color:var(--bad)} .stat.money b{color:var(--good)}
+.stat.seal b{color:#f0b95a} .stat.seal.paid b{color:var(--good)}
+#cycleWrap{flex:1;min-width:140px;display:flex;flex-direction:column;gap:2px}
+#cycleBar{height:5px;background:#0a0918;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+#cycleFill{height:100%;width:0%;background:linear-gradient(90deg,var(--violet),var(--gold))}
+#cycleTxt{font-size:9px;color:var(--dim);letter-spacing:1.1px;text-transform:uppercase}
+.hbtn{background:transparent;border:1px solid var(--line);color:var(--dim);
+  padding:4px 10px;border-radius:5px;font-family:inherit;font-size:9.5px;
+  letter-spacing:1.5px;cursor:pointer;text-transform:uppercase}
+.hbtn:hover{border-color:var(--gold);color:var(--gold)}
+
+#stage{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  background:#000;flex:0 0 auto}
+canvas{display:block;width:100%;height:auto;cursor:crosshair}
+#locName{position:absolute;top:8px;left:12px;font-size:14px;letter-spacing:2px;
+  text-transform:uppercase;color:#fff;text-shadow:0 2px 10px #000,0 0 16px rgba(139,92,246,.75);
+  pointer-events:none}
+#hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  font-size:11.5px;letter-spacing:1px;color:#fff;background:rgba(4,3,10,.72);
+  border:1px solid var(--line);padding:4px 12px;border-radius:12px;pointer-events:none;
+  white-space:nowrap}
+
+#lower{flex:1;display:flex;gap:8px;min-height:0}
+#log{flex:1.6;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;overflow-y:auto;font-size:12.5px;line-height:1.5}
+#log p{margin:0 0 8px}
+#log .sp{color:var(--gold);font-variant:small-caps;letter-spacing:1.5px;font-size:11.5px}
+#log .nar{color:var(--dim);font-style:italic}
+#log .bad{color:var(--bad)} #log .good{color:var(--good)}
+#log .sys{color:#7a71b4;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+#side{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+#actions{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;
+  display:flex;flex-direction:column;gap:5px;max-height:46%;overflow-y:auto}
+.act{background:#241e46;border:1px solid var(--line);color:var(--ink);padding:7px 9px;
+  border-radius:5px;font-family:inherit;font-size:12px;cursor:pointer;text-align:left;
+  line-height:1.3;transition:.15s}
+.act:hover:not(:disabled){border-color:var(--gold);background:#2e2657}
+.act:disabled{opacity:.4;cursor:not-allowed}
+.act em{display:block;font-style:normal;font-size:10px;color:var(--dim);margin-top:2px}
+.act.go{border-color:#2f6a45}
+.act.warn{border-color:#7a2f2f}
+#ledger{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;
+  flex:1;overflow-y:auto}
+.sect{font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;
+  margin:0 0 6px}
+.mem{display:flex;gap:7px;align-items:flex-start;padding:5px 7px;border-radius:5px;
+  background:var(--panel2);border:1px solid var(--line);margin-bottom:4px}
+.mem .dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex:0 0 auto;background:var(--good)}
+.mem.pled{background:#211a32;border-color:#4a3a1a} .mem.pled .dot{background:var(--lock)}
+.mem.repo{opacity:.6} .mem.repo .dot{background:var(--bad)}
+.mem .nm{font-size:11.5px;color:#fff}
+.mem .st{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--good)}
+.mem.pled .st{color:var(--lock)} .mem.repo .st{color:var(--bad)}
+.mem .ks{font-size:9.5px;color:var(--dim);margin-top:2px;line-height:1.3}
+
+/* Modals */
+.modal{position:absolute;inset:0;background:rgba(5,4,12,.93);display:flex;
+  align-items:center;justify-content:center;padding:18px;z-index:6}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:18px 20px;max-width:560px;width:100%;max-height:100%;overflow-y:auto}
+.sheet h2{margin:0 0 4px;font-size:19px;font-weight:normal;letter-spacing:2px;color:#fff}
+.sheet .sub{font-size:11px;color:var(--dim);letter-spacing:1px;margin-bottom:12px}
+.term{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;
+  border-bottom:1px dashed #2a2450}
+.term b{color:var(--gold)}
+.popt{display:flex;gap:8px;align-items:center;background:#241e46;border:1px solid var(--line);
+  border-radius:5px;padding:7px 9px;cursor:pointer;font-size:12px;margin-top:6px}
+.popt:hover:not(.dis){border-color:var(--violet)}
+.popt.on{border-color:var(--gold);background:#2e2657}
+.popt.dis{opacity:.4;cursor:not-allowed}
+.popt .v{margin-left:auto;color:var(--gold);font-size:11px}
+.sum{font-size:11px;color:var(--dim);margin:9px 0 4px;letter-spacing:.4px}
+.btnrow{display:flex;gap:8px;margin-top:12px}
+.btn{background:var(--violet);border:none;color:#fff;padding:10px 22px;border-radius:5px;
+  font-family:inherit;font-size:12px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}
+.btn:hover{background:#a17bf7}
+.btn:disabled{opacity:.35;cursor:not-allowed;background:var(--violet)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--dim)}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn.danger{background:#7f2a2a} .btn.danger:hover{background:#a03636}
+
+/* Intro / end */
+#intro,#over{position:absolute;inset:0;background:rgba(6,5,14,.95);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:22px;gap:11px;z-index:7}
+#intro h1,#over h1{margin:0;font-size:40px;letter-spacing:11px;color:#fff;
+  text-shadow:0 0 30px rgba(139,92,246,.9);font-weight:normal}
+#intro h2,#over h2{margin:0;font-size:11px;letter-spacing:4px;color:var(--gold);
+  text-transform:uppercase;font-weight:normal}
+#intro p,#over p{max-width:540px;font-size:13px;line-height:1.6;color:#c2bbe8;margin:0}
+#over h1{font-size:30px;letter-spacing:6px}
+.o-good h1{color:var(--good);text-shadow:0 0 30px rgba(74,222,128,.65)}
+.o-bad h1{color:var(--bad);text-shadow:0 0 30px rgba(248,113,113,.65)}
+.o-mid h1{color:var(--gold);text-shadow:0 0 30px rgba(240,185,90,.6)}
+.tagline{font-size:10px;letter-spacing:2.5px;color:var(--dim);text-transform:uppercase}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2c2554;border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
-<div id="game">
-  <div id="ui">
-    <div>COLLECTED: <span class="stat-value" id="collected">0/3</span></div>
-    <div>DEBT: <span class="stat-value" id="debt">0</span></div>
-    <div>SCORE: <span class="stat-value" id="score">0</span></div>
+<div id="app">
+
+  <div id="hud">
+    <div class="stat money"><span>Coin</span><b id="hMoney">100</b></div>
+    <div class="stat debt"><span>Debt</span><b id="hDebt">0</b></div>
+    <div class="stat"><span>Cycle</span><b id="hCycle">0</b></div>
+    <div id="cycleWrap">
+      <div id="cycleBar"><div id="cycleFill"></div></div>
+      <div id="cycleTxt">no loan active</div>
+    </div>
+    <div class="stat"><span>Evidence</span><b id="hEvi">0</b></div>
+    <div class="stat seal"><span>Seal</span><b id="hSeal">Unpaid</b></div>
+    <button class="hbtn" id="hTests">Tests</button>
+    <button class="hbtn" id="hReset">Reset</button>
   </div>
-  
-  <div id="choices" class="choice"></div>
-  
-  <div id="dialogues"></div>
-  
-  <div id="memory-display" class="memory-panel hidden"></div>
+
+  <div id="stage">
+    <canvas id="cv" width="720" height="380"></canvas>
+    <div id="locName">The Forgotten Square</div>
+    <div id="hint"></div>
+
+    <div id="intro">
+      <h2>Zoud GameLab 2026</h2>
+      <h1>LACUNA</h1>
+      <p>Forty-one streets have already been erased from this district's memory. The Bell Tower can ring them back, but the Lender holds its seal.</p>
+      <p>You own three memories. Each is <b>collateral</b> worth coin, and each is also <b>the only way you can do something</b>. Pledge one, and that capability leaves you.</p>
+      <p style="color:var(--gold)">Walk with WASD or click the ground. Press E near anything that glows.</p>
+      <button class="btn" id="btnStart">Enter the District</button>
+    </div>
+
+    <div id="over" class="hidden">
+      <h1 id="overTitle"></h1>
+      <h2 id="overSub"></h2>
+      <p id="overText"></p>
+      <p class="tagline" id="overStats"></p>
+      <button class="btn" id="btnAgain">Begin Again</button>
+    </div>
+
+    <div id="loanModal" class="modal hidden">
+      <div class="sheet">
+        <h2>The Lender's Terms</h2>
+        <div class="sub">Read before you sign. Nothing here is hidden.</div>
+        <div id="loanBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="lower">
+    <div id="log"></div>
+    <div id="side">
+      <div id="actions"></div>
+      <div id="ledger"><div class="sect">Your Memories</div><div id="memList"></div></div>
+    </div>
+  </div>
+
 </div>
+
 <script>
-// Game State
-const State = {
-  collected: [],
-  debt: 0,
-  interest: 0,
-  score: 0,
-  step: "intro"
+"use strict";
+
+var cv = document.getElementById("cv");
+var ctx = cv.getContext("2d");
+var W = cv.width, H = cv.height;
+
+/* ==========================================================
+   LACUNA
+   Memories are collateral. Memories are also capabilities.
+   The engine below is pure and deterministic: no RNG, no DOM.
+   The interface may only ask the engine what happened.
+   ========================================================== */
+
+/* ---------------- config ---------------- */
+
+var LOAN = { principal:400, rate:0.10, collateral:500, deadline:4, maxPledged:2 };
+var CYCLE_MS = 20000;
+
+var MEMIDS = ["voice","home","love"];
+
+var MEM = {
+  voice: { id:"voice", name:"Mother's Voice", value:300, cap:"listen",
+    ability:"Hear what is meant, not what is said.",
+    lost:"Echoes fall silent for you.",
+    door:"The Bell Tower door remembers the hymn." },
+  home: { id:"home", name:"Childhood Home", value:200, cap:"recall",
+    ability:"Know erased routes and hidden ways down.",
+    lost:"Passages you knew are just walls now.",
+    door:"The stair into the Sunken Archive is your old cellar." },
+  love: { id:"love", name:"The Face of Love", value:400, cap:"trust",
+    ability:"Be recognised, and borrow on your word.",
+    lost:"People look straight through you.",
+    door:"The back room opens for someone the Lender once trusted." }
 };
 
-// Memories
-const Memories = [
-  {id: "mother", name: "Mother's Voice", value: 300, description: "The sound of your mother calling you home. It brings comfort."},
-  {id: "home", name: "Childhood Home", value: 200, description: "The place where you first learned to be brave. Walls that knew your footsteps."},
-  {id: "love", name: "The Face of Love", value: 400, description: "The person who believed in you when no one else did. Their eyes held your future."}
-];
+/* ---------------- areas & what you can touch ---------------- */
 
-// UI Elements
-const dialoguesEl = document.getElementById("dialogues");
-const choicesEl = document.getElementById("choices");
-const memoryDisplayEl = document.getElementById("memory-display");
-const collectedEl = document.getElementById("collected");
-const debtEl = document.getElementById("debt");
-const scoreEl = document.getElementById("score");
+var AREAS = {
+  square: {
+    name:"The Forgotten Square",
+    sub:"A fountain that has not held water in years.",
+    floor:150, palette:{a:"#1b1334",b:"#120d24",c:"#2c2352"},
+    start:{x:150,y:330}
+  },
+  market: {
+    name:"The Memory Market",
+    sub:"The Lender keeps the district's ledger here.",
+    floor:150, palette:{a:"#18111c",b:"#0c0810",c:"#33263f"},
+    start:{x:120,y:320}
+  },
+  archive: {
+    name:"The Sunken Archive",
+    sub:"Half drowned. It keeps the record the district would rather lose.",
+    floor:170, palette:{a:"#061720",b:"#030b10",c:"#123540"},
+    start:{x:130,y:320}
+  },
+  tower: {
+    name:"The Bell Tower",
+    sub:"Sealed. The Lender holds its seal.",
+    floor:180, palette:{a:"#08071c",b:"#03020a",c:"#211a44"},
+    start:{x:150,y:320}
+  }
+};
 
-// Update UI
-function updateUI(){
-  collectedEl.textContent = State.collected.length+"/"+3;
-  debtEl.textContent = State.debt;
-  scoreEl.textContent = State.score;
+/* spots: kind = inter | npc | exit */
+var SPOTS = {
+  /* --- square --- */
+  statue:   {area:"square", x:140, y:250, r:34, kind:"inter", label:"the worn statue"},
+  fountain: {area:"square", x:430, y:285, r:38, kind:"inter", label:"the dry fountain"},
+  coatstall:{area:"square", x:612, y:255, r:34, kind:"inter", label:"the coat stall"},
+  seller:   {area:"square", x:295, y:300, r:32, kind:"npc",   label:"the Tired Seller"},
+  toMarket: {area:"square", x:58,  y:345, r:30, kind:"exit",  label:"the market road", to:"market"},
+  toArchive:{area:"square", x:352, y:360, r:30, kind:"exit",  label:"a cellar stair", to:"archive"},
+  toTower:  {area:"square", x:688, y:180, r:30, kind:"exit",  label:"the tower road", to:"tower"},
+
+  /* --- market --- */
+  lender:   {area:"market", x:470, y:205, r:36, kind:"npc",   label:"the Lender"},
+  counter:  {area:"market", x:470, y:290, r:32, kind:"inter", label:"the loan counter"},
+  backroom: {area:"market", x:662, y:200, r:32, kind:"inter", label:"the back room"},
+  toSquare1:{area:"market", x:52,  y:338, r:30, kind:"exit",  label:"the square", to:"square"},
+
+  /* --- archive --- */
+  ledger:   {area:"archive", x:200, y:275, r:34, kind:"inter", label:"the Ledger of Erasures"},
+  shelves:  {area:"archive", x:520, y:285, r:34, kind:"inter", label:"the drowned shelves"},
+  toSquare2:{area:"archive", x:58,  y:345, r:30, kind:"exit",  label:"the stair up", to:"square"},
+
+  /* --- tower --- */
+  bell:     {area:"tower", x:360, y:150, r:40, kind:"inter", label:"the bell"},
+  seal:     {area:"tower", x:470, y:300, r:32, kind:"inter", label:"the Lender's seal"},
+  toSquare3:{area:"tower", x:58,  y:345, r:30, kind:"exit",  label:"the tower road", to:"square"}
+};
+
+/* ---------------- pure engine ---------------- */
+
+function E_new(){
+  return {
+    area:"square", px:0, py:0,
+    money:100, cycle:0, cycleT:0,
+    loan:null, debt:0, tookLoan:false, everDefaulted:false,
+    pledged:[], repossessed:[],
+    evidence:[], used:{},
+    started:false, ended:null,
+    sealPaid:false,
+    log:[]
+  };
 }
 
-// Add dialogue
-function addDialogue(speaker, text, cls="normal"){
-  const div = document.createElement("div");
-  div.className = "dialogue "+cls;
-  div.innerHTML = "<strong>"+speaker+"</strong>: "+text;
-  dialoguesEl.appendChild(div);
-  dialoguesEl.scrollTop = dialoguesEl.scrollHeight;
-}
-
-// Add choice button
-function addChoice(text, callback){
-  const btn = document.createElement("button");
-  btn.textContent = text;
-  btn.onclick = ()=>{ choicesEl.innerHTML=""; callback(); };
-  choicesEl.appendChild(btn);
-}
-
-// Create memory display
-function createMemoryDisplay(){
-  memoryDisplayEl.innerHTML = "<h3>Your Memories (click to inspect)</h3>";
-  Memories.forEach(m => {
-    const card = document.createElement("div");
-    card.className = "memory-card " + (State.collected.includes(m.id) ? "pledged" : "");
-    card.innerHTML = "<div class='memory-name'>"+m.name+"</div><div class='memory-value'>Value: "+m.value+"</div>";
-    card.onclick = () => inspectMemory(m);
-    memoryDisplayEl.appendChild(card);
+function E_held(St){
+  return MEMIDS.filter(function(id){
+    return St.pledged.indexOf(id) < 0 && St.repossessed.indexOf(id) < 0;
   });
 }
-
-function inspectMemory(memory){
-  const div = document.createElement("div");
-  div.className = "dialogue";
-  div.style.background = "rgba(255,255,255,0.9)";
-  div.style.color = "#000";
-  div.style.borderLeftColor = "#8b5cf6";
-  div.innerHTML = "<strong>"+memory.name+"</strong><br>"+memory.description;
-  memoryDisplayEl.appendChild(div);
-  memoryDisplayEl.scrollTop = memoryDisplayEl.scrollHeight;
+function E_has(St,id){ return E_held(St).indexOf(id) >= 0; }
+function E_can(St, needAny){
+  if(!needAny || !needAny.length) return true;
+  return needAny.some(function(id){ return E_has(St,id); });
 }
-
-// Start game
-function start(){
-  addDialogue("Narrator", "In Mnemosyne, memories have value. People borrow against them to live today, but losing that memory changes who they are.", "narrator");
-  addDialogue("Narrator", "Someone has been borrowing against the city's future. Streets fade from everyone's mind - except yours.", "narrator");
-  addDialogue("Lender", "Hello. I am the Keeper of What Was and What Could Be. Your memories are your currency here.", "lender");
-  addDialogue("Lender", "Three memories are pledgable: Mother's Voice, Childhood Home, and The Face of Love. Each holds value... and a key.", "lender");
-  
-  choicesEl.style.display = "flex";
-  addChoice("Meet the Lender", meetLender);
-  addChoice("Explore the City", exploreCity);
-  addChoice("View Your Memories", viewMemories);
-}
-
-// Game scenes
-function meetLender(){
-  choicesEl.innerHTML = ""; dialoguesEl.innerHTML = "";
-  addDialogue("Lender", "State your purpose, borrower.", "lender");
-  addDialogue("Lender", "What memory would you risk to unlock what you need?", "lender");
-  
-  Memories.forEach(m => {
-    if(!State.collected.includes(m.id)){
-      addChoice("Pledge: "+m.name, () => pledgeMemory(m));
-    }
+function E_cap(St,cap){
+  return MEMIDS.some(function(id){
+    return MEM[id].cap === cap && E_has(St,id);
   });
-  addChoice("I need to think", exploreCity);
+}
+function E_evi(St,id){ return St.evidence.some(function(e){ return e.id === id; }); }
+function E_collateral(St){
+  return St.pledged.reduce(function(s,id){ return s + MEM[id].value; }, 0);
 }
 
-function exploreCity(){
-  choicesEl.innerHTML = ""; dialoguesEl.innerHTML = "";
-  addDialogue("Narrator", "The city streets shimmer. Some places feel... empty. As if no one remembers them.", "narrator");
-  addDialogue("Narrator", "You find a letter in an abandoned library. It hints at a secret passage.", "narrator");
-  addDialogue("Narrator", "But the wall here feels solid. Maybe you need a memory to open it...", "narrator");
-  
-  choicesEl.style.display = "flex";
-  addChoice("Return to Lender", meetLender);
-  addChoice("Check Memories", viewMemories);
+function E_takeLoan(St, ids){
+  if(St.loan) return {ok:false, msg:"You already owe the Lender."};
+  ids = ids.slice();
+  if(ids.length > LOAN.maxPledged)
+    return {ok:false, msg:"The Lender will not take all three. You must keep one way to remember anything."};
+  var sum = ids.reduce(function(s,id){ return s + MEM[id].value; }, 0);
+  if(sum < LOAN.collateral)
+    return {ok:false, msg:"Collateral must total at least "+LOAN.collateral+"."};
+  if(ids.some(function(id){ return St.pledged.indexOf(id)>=0 || St.repossessed.indexOf(id)>=0; }))
+    return {ok:false, msg:"That memory is already beyond you."};
+
+  St.pledged = St.pledged.concat(ids);
+  St.loan = {principal:LOAN.principal, balance:LOAN.principal, takenAt:St.cycle};
+  St.debt = LOAN.principal;
+  St.tookLoan = true;
+  St.money += LOAN.principal;
+  St.cycleT = 0;
+  return {ok:true, msg:"Signed. "+LOAN.principal+" coin against "+ids.map(function(i){return MEM[i].name;}).join(" and ")+"."};
 }
 
-function viewMemories(){
-  choicesEl.innerHTML = ""; choicesEl.style.display = "none";
-  memoryDisplayEl.classList.remove("hidden");
-  
-  if(State.collected.length > 0){
-    addDialogue("Narrator", "Your pledged memories fade from everyday recollection, but their value remains in your account.", "narrator");
-    addChoice("Return to Lender", meetLender);
-    addChoice("Continue Exploring", exploreCity);
+function E_accrue(St){
+  if(!St.loan) return null;
+  St.cycle++;
+  St.debt = Math.round(St.debt * (1 + LOAN.rate));
+  St.loan.balance = St.debt;
+  var out = {cycle:St.cycle, debt:St.debt, repo:null};
+  if(St.cycle > LOAN.deadline){
+    out.repo = E_repossess(St);
   }
+  return out;
 }
 
-// Pledge memory
-function pledgeMemory(memory){
-  choicesEl.innerHTML = ""; choicesEl.style.display = "none";
-  State.collected.push(memory.id);
-  State.debt++;
-  State.interest += memory.value;
-  State.score += memory.value;
-  
-  addDialogue("Lender", "Your "+memory.name+" is now pledged as collateral.", "lender");
-  addDialogue("Lender", "Interest accrues at 5% per cycle. Be careful with defaults.", "lender");
-  
-  updateUI();
-  
-  setTimeout(()=>{
-    choicesEl.style.display = "flex";
-    addChoice("Continue Exploring", exploreCity);
-    if(State.debt >= 2){
-      addChoice("View Debt Account", viewDebt);
+function E_repossess(St){
+  if(!St.pledged.length){
+    St.ended = "broke";
+    return {id:null, ended:"broke"};
+  }
+  var best = St.pledged.slice().sort(function(a,b){ return MEM[b].value - MEM[a].value; })[0];
+  St.pledged = St.pledged.filter(function(id){ return id !== best; });
+  St.repossessed.push(best);
+  St.everDefaulted = true;
+  if(!St.pledged.length) St.ended = "broke";
+  return {id:best, ended:St.ended};
+}
+
+function E_repay(St){
+  if(!St.loan) return {ok:false, msg:"You owe nothing."};
+  if(St.money < St.debt) return {ok:false, msg:"You need "+(St.debt-St.money)+" more coin."};
+  var paid = St.debt;
+  St.money -= paid;
+  var back = St.pledged.slice();
+  St.pledged = [];
+  St.loan = null;
+  St.debt = 0;
+  St.cycleT = 0;
+  return {ok:true, paid:paid, back:back};
+}
+
+function E_travel(St, to){
+  var g = E_gate(St, to);
+  if(!g.ok) return g;
+  St.area = to;
+  St.px = AREAS[to].start.x;
+  St.py = AREAS[to].start.y;
+  return {ok:true};
+}
+
+function E_gate(St, to){
+  if(to === "tower" && !E_held(St).length)
+    return {ok:false, msg:"Nothing in you remembers the way. You have pledged everything that could open a door."};
+  return {ok:true};
+}
+
+var SEAL_FEE = 300;
+
+function E_paySeal(St){
+  if(St.sealPaid) return {ok:false, msg:"The seal is already paid."};
+  if(St.money < SEAL_FEE) return {ok:false, msg:"The seal costs "+SEAL_FEE+" coin. You have "+St.money+"."};
+  St.money -= SEAL_FEE;
+  St.sealPaid = true;
+  return {ok:true, paid:SEAL_FEE};
+}
+
+function E_win(St){
+  if(!St.started || St.ended) return {ok:false};
+  var g = E_gate(St,"tower");
+  if(St.area !== "tower") return {ok:false, msg:"You must be at the bell."};
+  if(St.loan || St.debt > 0) return {ok:false, msg:"The bell will not sound through debt. Settle the account first."};
+  if(St.evidence.length < 2) return {ok:false, msg:"The bell has nothing true to say yet. Bring at least 2 pieces of evidence."};
+  if(!St.tookLoan) return {ok:false, msg:"The Lender holds this district's seal. They will not release the bell to someone who never dealt with them."};
+  if(!St.sealPaid) return {ok:false, msg:"The seal fee of "+SEAL_FEE+" coin is unpaid. The Lender does not open this door for free."};
+  return {ok:true};
+}
+
+function E_ending(St){
+  if(St.ended === "broke") return "broke";
+  if(St.ended !== "win") return null;
+  var held = E_held(St).length, ev = St.evidence.length;
+  if(!St.everDefaulted && held === 3 && ev >= 4 && E_evi(St,"contract")) return "newledger";
+  if(!St.everDefaulted && ev >= 3) return "remembered";
+  return "forgotten";
+}
+
+/* interaction definitions operate on state and return a result */
+var INTER = {
+  statue: {once:true, run:function(St){
+    if(E_evi(St,"inscription")) return {msg:"The inscription has already told you what it knows."};
+    St.evidence.push({id:"inscription", name:"The Worn Inscription"});
+    return {msg:"Beneath the worn face: <i>'All that is remembered here stands as security.'</i>", evi:"The Worn Inscription", cls:"good"};
+  }},
+
+  fountain: {once:true, run:function(St){
+    St.money += 50;
+    return {msg:"A single coin, still in the dry basin. +50 coin.", cls:"good"};
+  }},
+
+  coatstall: {once:true, run:function(St){
+    St.money += 150;
+    return {msg:"You sell your coat. +150 coin. You will be cold later; later is not now.", cls:"good"};
+  }},
+
+  seller: {once:true, needAny:["voice","love"], run:function(St){
+    var viaVoice = E_has(St,"voice");
+    St.money += 200;
+    St.evidence.push({id:"confession", name:"The Seller's Confession"});
+    if(viaVoice)
+      return {msg:"You hear what he <i>means</i> under the lie, and he cannot keep it up. <i>'The Lender carried the last street out in a jar.'</i> +200 coin. Evidence: The Seller's Confession.", cls:"good"};
+    return {msg:"He trusts you, so he says it plainly. <i>'The Lender carried the last street out in a jar.'</i> +200 coin. Evidence: The Seller's Confession.", cls:"good"};
+  }},
+
+  counter: {run:function(St){
+    if(St.loan)
+      return {msg:"Principal "+LOAN.principal+". Balance now <b>"+St.debt+"</b>. Rate "+Math.round(LOAN.rate*100)+"% per cycle. Deadline: cycle "+LOAN.deadline+". Your collateral is worth "+E_collateral(St)+"."};
+    return {msg:"Principal "+LOAN.principal+" coin. Rate "+Math.round(LOAN.rate*100)+"%, compounded once per cycle. Collateral required: "+LOAN.collateral+" in memory value. Deadline: cycle "+LOAN.deadline+", then repossession. Speak to the Lender to sign."};
+  }},
+
+  backroom: {needAny:["love"], run:function(St){
+    if(E_evi(St,"contract")) return {msg:"You have already read the original. It has not changed."};
+    St.evidence.push({id:"contract", name:"The Original Contract"});
+    return {msg:"The original is not a loan. It is a <b>deed</b>. The whole district was pledged by someone who was never asked. Evidence: The Original Contract.", cls:"good"};
+  }},
+
+  ledger: {run:function(St){
+    if(E_evi(St,"ledger")) return {msg:"You have already copied the ledger."};
+    St.evidence.push({id:"ledger", name:"The Ledger of Erasures"});
+    St.money += 250;
+    return {msg:"Forty-one streets, in the Lender's own hand. The Forgotten Square is number forty-two. +250 coin from the strongbox. Evidence: The Ledger of Erasures.", cls:"good"};
+  }},
+
+  shelves: {run:function(St){
+    if(E_evi(St,"testimony")) return {msg:"Nothing else is left in the silt."};
+    St.evidence.push({id:"testimony", name:"The Torn Testimony"});
+    return {msg:"A page in another hand: <i>'I signed because I was told it was the only way to keep the house.'</i> Evidence: The Torn Testimony.", cls:"good"};
+  }},
+
+  seal: {run:function(St){
+    if(St.sealPaid)
+      return {msg:"The seal is paid and broken. The door remembers you now."};
+    return {msg:"The seal reads: <i>'All that is remembered here stands as security.'</i> Under it, in smaller hand: <i>'Release of seal: "+SEAL_FEE+" coin.'</i> The district was collateral long before you arrived."};
+  }},
+
+  bell: {run:function(St){
+    var w = E_win(St);
+    if(!w.ok) return {msg:w.msg, cls:"bad"};
+    St.ended = "win";
+    return {msg:"You ring it.", cls:"good"};
+  }}
+};
+
+function E_interact(St, id){
+  var sp = SPOTS[id];
+  if(!sp) return {ok:false, msg:"Nothing there."};
+  if(sp.kind === "exit"){
+    var g = E_gate(St, sp.to);
+    if(!g.ok) return {ok:false, msg:g.msg, cls:"bad"};
+    var t = E_travel(St, sp.to);
+    return {ok:true, travel:sp.to, msg:""};
+  }
+  if(sp.kind === "npc" && id === "lender")
+    return {ok:true, lender:true};
+
+  var def = INTER[id];
+  if(!def) return {ok:false, msg:"Nothing there."};
+  if(def.needAny && !E_can(St, def.needAny)){
+    var missing = def.needAny.filter(function(m){ return !E_has(St,m); });
+    var why = missing.map(function(m){ return MEM[m].lost; }).join(" ");
+    return {ok:false, msg:"You cannot. "+why, cls:"bad"};
+  }
+  if(def.once && St.used[id]) return {ok:false, msg:"There is nothing more to do there."};
+  var r = def.run(St);
+  if(def.once) St.used[id] = true;
+  return {ok:true, msg:r.msg, cls:r.cls};
+}
+
+/* ---------------- facade ---------------- */
+
+var S = E_new();
+var $ = function(id){ return document.getElementById(id); };
+
+function log(html, cls){
+  var p = document.createElement("p");
+  if(cls) p.className = cls;
+  p.innerHTML = html;
+  var box = $("log");
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
+function say(sp, text){ log('<span class="sp">'+sp+'</span> '+text); }
+function narr(text, cls){ log('<span class="nar">'+text+'</span>', cls); }
+function sys(text){ log('<span class="sys">'+text+'</span>'); }
+
+/* ---------------- player movement ---------------- */
+
+var player = {x:150, y:330, tx:null, ty:null, bob:0, face:1, moving:false};
+var keys = {};
+var NEAR = null;
+
+function setArea(area){
+  S.px = AREAS[area].start.x;
+  S.py = AREAS[area].start.y;
+  player.x = S.px; player.y = S.py;
+  player.tx = player.ty = null;
+  $("locName").textContent = AREAS[area].name;
+}
+
+function nearestSpot(){
+  var best = null, bd = 1e9;
+  var list = spotsIn(S.area);
+  for(var i=0;i<list.length;i++){
+    var sp = list[i];
+    var d = Math.hypot(player.x - sp.x, player.y - sp.y);
+    if(d < sp.r && d < bd){ bd = d; best = sp; }
+  }
+  return best;
+}
+function spotsIn(area){
+  var out = [];
+  Object.keys(SPOTS).forEach(function(k){
+    if(SPOTS[k].area === area) out.push(Object.assign({id:k}, SPOTS[k]));
+  });
+  return out;
+}
+
+function movePlayer(dt){
+  var sp = 165;
+  var dx = 0, dy = 0;
+  if(keys.w || keys.arrowup) dy -= 1;
+  if(keys.s || keys.arrowdown) dy += 1;
+  if(keys.a || keys.arrowleft) dx -= 1;
+  if(keys.d || keys.arrowright) dx += 1;
+
+  if(dx || dy){
+    player.tx = player.ty = null;
+    var m = Math.hypot(dx,dy) || 1;
+    dx /= m; dy /= m;
+    player.x += dx * sp * dt;
+    player.y += dy * sp * dt;
+    if(Math.abs(dx) > 0.1) player.face = dx > 0 ? 1 : -1;
+    player.moving = true;
+  } else if(player.tx !== null){
+    var ddx = player.tx - player.x, ddy = player.ty - player.y;
+    var d = Math.hypot(ddx,ddy);
+    if(d < 4){ player.tx = player.ty = null; player.moving = false; }
+    else {
+      player.x += (ddx/d) * sp * dt;
+      player.y += (ddy/d) * sp * dt;
+      if(Math.abs(ddx) > 4) player.face = ddx > 0 ? 1 : -1;
+      player.moving = true;
     }
-  }, 1500);
+  } else player.moving = false;
+
+  var A = AREAS[S.area];
+  var top = A.floor + 14;
+  player.x = Math.max(24, Math.min(696, player.x));
+  player.y = Math.max(top, Math.min(364, player.y));
+
+  if(player.moving) player.bob += dt * 11;
+
+  S.px = player.x; S.py = player.y;
 }
 
-function viewDebt(){
-  choicesEl.innerHTML = "";
-  addDialogue("Lender", "Current Debt: "+State.debt, "lender");
-  addDialogue("Lender", "Accumulated Interest: "+State.interest, "lender");
-  
-  addChoice("Continue Exploring", exploreCity);
-  if(Math.random() > 0.5){
-    addChoice("Attempt Repayment", attemptRepay);
+function interact(){
+  var sp = NEAR;
+  if(!sp) return;
+  var r = E_interact(S, sp.id);
+  if(r.lender){ openLoan(); return; }
+  if(r.travel){
+    setArea(r.travel);
+    narr(AREAS[r.travel].sub);
+    renderAll();
+    return;
+  }
+  if(r.msg){
+    var spName = sp.label;
+    if(r.cls === "bad") narr(r.msg, "bad");
+    else if(sp.kind === "npc") say(spName, r.msg);
+    else if(r.cls === "good") narr(r.msg, "good");
+    else narr(r.msg);
+  }
+  renderAll();
+}
+
+/* ---------------- loan modal ---------------- */
+
+var sel = [];
+
+function openLoan(){
+  sel = [];
+  $("loanModal").classList.remove("hidden");
+  renderLoan();
+}
+function closeLoan(){
+  $("loanModal").classList.add("hidden");
+}
+
+function renderLoan(){
+  var box = $("loanBody");
+  box.innerHTML = "";
+
+  var t = document.createElement("div");
+  t.innerHTML =
+    '<div class="term"><span>Principal</span><b>'+LOAN.principal+' coin</b></div>'+
+    '<div class="term"><span>Interest</span><b>'+Math.round(LOAN.rate*100)+'% per cycle, compounded</b></div>'+
+    '<div class="term"><span>Collateral required</span><b>'+LOAN.collateral+' memory value</b></div>'+
+    '<div class="term"><span>Deadline</span><b>cycle '+LOAN.deadline+', then repossession</b></div>'+
+    '<div class="term"><span>Balance if taken now</span><b>'+LOAN.principal+' coin</b></div>';
+  box.appendChild(t);
+
+  if(S.loan){
+    var bal = document.createElement("div");
+    bal.className = "sum";
+    bal.innerHTML = "You currently owe <b style='color:#f87171'>"+S.debt+"</b> coin. Collateral held: "+E_collateral(S)+".";
+    box.appendChild(bal);
+
+    var repay = document.createElement("button");
+    repay.className = "btn" + (S.money >= S.debt ? "" : " ghost");
+    repay.textContent = "Repay " + S.debt + " coin";
+    repay.disabled = S.money < S.debt;
+    if(S.money < S.debt) repay.title = "You need " + (S.debt - S.money) + " more coin.";
+    repay.onclick = function(){
+      var r = E_repay(S);
+      if(!r.ok){ narr(r.msg, "bad"); return; }
+      say("The Lender", "Paid in full: " + r.paid + " coin. Take them back. They were never mine to keep.");
+      r.back.forEach(function(id){
+        narr("<b>"+MEM[id].name+" returns to you.</b> "+MEM[id].ability+" is yours again.", "good");
+      });
+      if(S.cycle <= 1 && r.paid <= LOAN.principal)
+        narr("Settled inside the first cycle. No interest was charged. That is what paying early is worth.", "good");
+      closeLoan();
+      renderAll();
+    };
+    box.appendChild(repay);
+
+    var c = document.createElement("button");
+    c.className = "btn ghost";
+    c.textContent = "Leave";
+    c.onclick = closeLoan;
+    box.appendChild(c);
+    return;
+  }
+
+  var head = document.createElement("div");
+  head.className = "sum";
+  head.textContent = "Choose collateral. You need " + LOAN.collateral + " in value, and you may pledge at most " + LOAN.maxPledged + " memories.";
+  box.appendChild(head);
+
+  MEMIDS.forEach(function(id){
+    var m = MEM[id];
+    var on = sel.indexOf(id) !== -1;
+    var el = document.createElement("div");
+    el.className = "popt" + (on ? " on" : "");
+    el.innerHTML = '<span><b style="color:#fff">'+m.name+'</b><br><span style="font-size:10px;color:#948bc4">'+m.ability+'</span></span>'+
+                   '<span class="v">'+m.value+'</span>';
+    el.onclick = function(){
+      var i = sel.indexOf(id);
+      if(i === -1){
+        if(sel.length >= LOAN.maxPledged){ narr("The Lender will not take all three. Keep one way to remember anything.", "bad"); return; }
+        sel.push(id);
+      } else sel.splice(i,1);
+      renderLoan();
+    };
+    box.appendChild(el);
+  });
+
+  var sum = sel.reduce(function(s,id){ return s + MEM[id].value; }, 0);
+  var sumEl = document.createElement("div");
+  sumEl.className = "sum";
+  sumEl.innerHTML = "Collateral: <b style='color:"+(sum>=LOAN.collateral?"#4ade80":"#f0b95a")+"'>"+sum+"</b> / "+LOAN.collateral+
+    " &nbsp;·&nbsp; you will keep "+(3-sel.length)+" memor"+((3-sel.length)===1?"y":"ies")+".";
+  box.appendChild(sumEl);
+
+  var row = document.createElement("div");
+  row.className = "btnrow";
+
+  var sign = document.createElement("button");
+  sign.className = "btn";
+  sign.textContent = "Sign for " + LOAN.principal + " coin";
+  sign.disabled = sum < LOAN.collateral;
+  sign.onclick = function(){
+    var r = E_takeLoan(S, sel);
+    if(!r.ok){ narr(r.msg, "bad"); return; }
+    say("The Lender", r.msg);
+    sel.forEach(function(id){
+      narr("<b>"+MEM[id].name+" is pledged.</b> "+MEM[id].lost+" "+MEM[id].door+" is shut to you.", "bad");
+    });
+    sys("Loan active. " + Math.round(LOAN.rate*100) + "% compounds each cycle. Deadline: cycle " + LOAN.deadline + ".");
+    closeLoan();
+    renderAll();
+  };
+  row.appendChild(sign);
+
+  var cancel = document.createElement("button");
+  cancel.className = "btn ghost";
+  cancel.textContent = "Not today";
+  cancel.onclick = closeLoan;
+  row.appendChild(cancel);
+
+  box.appendChild(row);
+}
+
+/* ---------------- ticker ---------------- */
+
+function tick(ms){
+  if(!S.started || S.ended) return;
+  if(!S.loan) { S.cycleT = 0; return; }
+  S.cycleT += ms;
+  if(S.cycleT >= CYCLE_MS){
+    S.cycleT -= CYCLE_MS;
+    var r = E_accrue(S);
+    if(r){
+      narr("Interest compounds. You now owe <b>" + r.debt + " coin</b>.",
+        r.cycle > LOAN.deadline ? "bad" : "");
+      if(r.repo && r.repo.id){
+        narr("Something rings that is not the Bell Tower.", "bad");
+        say("The Lender", "Default. Collateral is mine now. " + MEM[r.repo.id].name + " is repossessed.");
+        narr("<b>" + MEM[r.repo.id].name + " is gone permanently.</b> " + MEM[r.repo.id].lost, "bad");
+      }
+      if(S.ended === "broke"){
+        narr("You have nothing left to pledge and nothing left to pay with.", "bad");
+        openEnding();
+      }
+    }
+    renderAll();
   }
 }
 
-function attemptRepay(){
-  choicesEl.innerHTML = "";
-  if(Math.random() > 0.4){
-    addDialogue("Lender", "You negotiate a partial repayment. The debt decreases.", "lender");
-    State.debt = Math.max(0, State.debt - 1);
-    State.interest = Math.max(0, State.interest - 50);
-  }else{
-    addDialogue("Lender", "The negotiation goes poorly. You end up owing more.", "lender");
-    State.debt += 1;
-    State.interest += 50;
-    State.score -= 50;
-  }
-  updateUI();
-  
-  setTimeout(()=>{
-    choicesEl.style.display = "flex";
-    addChoice("Continue Exploring", exploreCity);
-  }, 1500);
+/* ---------------- endings ---------------- */
+
+var ENDINGS = {
+  newledger: {cls:"o-good", title:"THE NEW LEDGER", sub:"You rewrote who holds the deed",
+    text:"You kept every memory, settled the account, and carried the deed itself to the bell. The district does not simply remember again - it is released. What was pledged without consent is returned to the people it was taken from."},
+  remembered: {cls:"o-good", title:"THE REMEMBERED CITY", sub:"Forty-one streets come home",
+    text:"You settled what you owed and brought enough of the record to the tower. The bell had something true to say. The streets come back one at a time, like breath, and people remember their own names."},
+  forgotten: {cls:"o-mid", title:"THE FORGOTTEN CITY", sub:"The bell rang, but not for everything",
+    text:"The bell sounded and some streets returned. But you came to it thin - too little evidence, or too much given away. The district remembers part of itself and forgets the rest, and the Lender keeps the difference."},
+  broke: {cls:"o-bad", title:"THE ACCOUNT CLOSES", sub:"Debt without collateral",
+    text:"The interest outran you. There is nothing left to seize and nothing left of you to seize it from. Some debts do not end; they simply stop being discussed."}
+};
+
+function openEnding(){
+  var kind = S.ending || E_ending(S);
+  if(!kind) kind = "forgotten";
+  var e = ENDINGS[kind];
+  var el = $("over");
+  el.classList.remove("hidden","o-good","o-bad","o-mid");
+  el.classList.add(e.cls);
+  $("overTitle").textContent = e.title;
+  $("overSub").textContent = e.sub;
+  $("overText").innerHTML = e.text;
+  $("overStats").textContent =
+    "Coin " + S.money + "  ·  Evidence " + S.evidence.length + "/5  ·  Cycle " + S.cycle +
+    "  ·  Memories held " + E_held(S).length + "/3  ·  Repossessed " + S.repossessed.length;
+  $("actions").innerHTML = "";
+  renderLedger();
 }
 
-// Start the game
-createMemoryDisplay();
-updateUI();
-start();
+/* ---------------- event wiring ---------------- */
+
+function renderActions(){
+  var box = $("actions");
+  box.innerHTML = "";
+  if(!S.started || S.ended) return;
+
+  var sp = NEAR;
+  if(sp){
+    if(sp.kind === "exit"){
+      var g = E_gate(S, sp.to);
+      var b1 = document.createElement("button");
+      b1.className = "act" + (g.ok ? "" : " warn");
+      b1.innerHTML = "Go to " + AREAS[sp.to].name + (g.ok ? "" : "<em>" + g.msg + "</em>");
+      b1.disabled = !g.ok;
+      b1.onclick = interact;
+      box.appendChild(b1);
+    } else if(sp.kind === "npc" && sp.id === "lender"){
+      var b2 = document.createElement("button");
+      b2.className = "act go";
+      b2.innerHTML = "Speak to the Lender<em>Take or settle a loan.</em>";
+      b2.onclick = openLoan;
+      box.appendChild(b2);
+    } else {
+      var b3 = document.createElement("button");
+      b3.className = "act";
+      b3.innerHTML = "Inspect " + sp.label + "<em>Press E</em>";
+      b3.onclick = interact;
+      box.appendChild(b3);
+    }
+  } else {
+    var p = document.createElement("div");
+    p.style.cssText = "font-size:11px;color:#7a71b4;line-height:1.5;padding:2px";
+    p.innerHTML = "Walk to something that glows, then press <b>E</b> or click. Use <b>WASD</b> or click the ground to move.";
+    box.appendChild(p);
+  }
+
+  // contextual shortcuts
+  if(S.area === "tower"){
+    if(!S.sealPaid){
+      var sb = document.createElement("button");
+      sb.className = "act" + (S.money >= SEAL_FEE ? " go" : " warn");
+      sb.innerHTML = "Pay the seal fee (" + SEAL_FEE + " coin)" +
+        (S.money >= SEAL_FEE ? "<em>The Lender releases the bell." : "<em>You have " + S.money + " coin.");
+      sb.disabled = S.money < SEAL_FEE;
+      sb.onclick = function(){
+        var r = E_paySeal(S);
+        if(!r.ok){ narr(r.msg, "bad"); return; }
+        narr("You pay " + r.paid + " coin. The seal cracks and falls away from the door.", "good");
+        renderAll();
+      };
+      box.appendChild(sb);
+    }
+    var w = E_win(S);
+    var bb = document.createElement("button");
+    bb.className = "act" + (w.ok ? " go" : "");
+    bb.innerHTML = "Ring the bell" + (w.ok ? "<em>Everything you gathered is about to be heard.</em>" : "<em>" + w.msg + "</em>");
+    bb.disabled = !w.ok;
+    bb.onclick = function(){
+      var r = E_win(S);
+      if(!r.ok){ narr(r.msg, "bad"); return; }
+      S.ended = "win";
+      S.ending = E_ending(S);
+      openEnding();
+    };
+    box.appendChild(bb);
+  }
+  if(S.loan){
+    var rp = document.createElement("button");
+    rp.className = "act" + (S.money >= S.debt ? " go" : " warn");
+    rp.innerHTML = "Repay " + S.debt + " coin" + (S.money >= S.debt ? "" : "<em>You need " + (S.debt - S.money) + " more.</em>");
+    rp.disabled = S.money < S.debt;
+    rp.onclick = function(){
+      var r = E_repay(S);
+      if(!r.ok){ narr(r.msg,"bad"); return; }
+      say("The Lender","Paid in full: " + r.paid + " coin. Take them back.");
+      r.back.forEach(function(id){
+        narr("<b>"+MEM[id].name+" returns to you.</b> "+MEM[id].ability+" is yours again.","good");
+      });
+      renderAll();
+    };
+    box.appendChild(rp);
+  }
+}
+
+function renderLedger(){
+  var box = $("memList");
+  box.innerHTML = "";
+  MEMIDS.forEach(function(id){
+    var m = MEM[id];
+    var isP = S.pledged.indexOf(id) >= 0;
+    var isR = S.repossessed.indexOf(id) >= 0;
+    var d = document.createElement("div");
+    d.className = "mem" + (isP ? " pled" : "") + (isR ? " repo" : "");
+    var st = isR ? "Repossessed" : (isP ? "Pledged" : "Held");
+    d.innerHTML =
+      '<div class="dot"></div><div>' +
+      '<div class="nm">'+m.name+' <span style="color:#f0b95a;font-size:10px">'+m.value+'</span></div>'+
+      '<div class="st">'+st+'</div>'+
+      '<div class="ks">'+(isR ? "Lost. You cannot get it back." :
+        isP ? m.lost :
+        m.ability)+'</div></div>';
+    box.appendChild(d);
+  });
+  var e = document.createElement("div");
+  e.style.cssText = "font-size:10px;color:#948bc4;margin-top:5px;line-height:1.45";
+  e.innerHTML = "Evidence <b style='color:#f0b95a'>"+S.evidence.length+"/2</b>: " +
+    (S.evidence.length ? S.evidence.map(function(x){return x.name;}).join(" · ") : "none yet");
+  box.appendChild(e);
+}
+
+function renderAll(){ renderActions(); renderLedger(); updateHud(); }
+
+function updateHud(){
+  $("hMoney").textContent = S.money;
+  $("hDebt").textContent = S.loan ? S.debt : 0;
+  $("hCycle").textContent = S.cycle;
+  $("hEvi").textContent = S.evidence.length;
+  var hSeal = $("hSeal");
+  hSeal.textContent = S.sealPaid ? "Paid" : "Unpaid";
+  hSeal.parentElement.classList.toggle("paid", S.sealPaid);
+
+  var fill = $("cycleFill"), txt = $("cycleTxt");
+  if(S.loan){
+    fill.style.width = Math.min(100,(S.cycleT/CYCLE_MS)*100).toFixed(1) + "%";
+    var left = LOAN.deadline - S.cycle;
+    if(left >= 0){
+      txt.textContent = Math.round(LOAN.rate*100)+"% / cycle · deadline in "+left+" cycle"+(left===1?"":"s");
+      txt.style.color = left <= 1 ? "#f87171" : "#948bc4";
+    } else {
+      txt.textContent = "IN DEFAULT · repossession pending";
+      txt.style.color = "#f87171";
+    }
+  } else {
+    fill.style.width = "0%";
+    txt.textContent = "no loan active";
+    txt.style.color = "#948bc4";
+  }
+
+  var hint = $("hint");
+  if(NEAR && !S.ended){
+    hint.textContent = NEAR.kind === "exit" ? "E · go to " + AREAS[NEAR.to].name
+      : NEAR.kind === "npc" ? "E · speak to " + NEAR.label
+      : "E · inspect " + NEAR.label;
+    hint.style.display = "block";
+  } else hint.style.display = "none";
+}
+
+/* ---------------- rendering ---------------- */
+
+var motes = [];
+for(var i=0;i<44;i++){
+  motes.push({x:Math.random()*720, y:Math.random()*380,
+    s:0.4+Math.random()*1.2, v:4+Math.random()*14, r:0.6+Math.random()*1.6});
+}
+var T = 0;
+
+function drawArea(){
+  var A = AREAS[S.area];
+  var p = A.palette;
+  var g = ctx.createLinearGradient(0,0,0,380);
+  g.addColorStop(0,p.a); g.addColorStop(1,p.b);
+  ctx.fillStyle = g; ctx.fillRect(0,0,720,380);
+
+  // floor
+  ctx.fillStyle = p.c;
+  ctx.globalAlpha = .28;
+  ctx.fillRect(0, A.floor, 720, 380-A.floor);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = "rgba(255,255,255,.05)";
+  ctx.lineWidth = 1;
+  for(var y=A.floor; y<380; y+=22){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(720,y); ctx.stroke();
+  }
+
+  if(S.area === "square") drawSquare();
+  if(S.area === "market") drawMarket();
+  if(S.area === "archive") drawArchive();
+  if(S.area === "tower") drawTower();
+}
+
+function drawSquare(){
+  // distant shapes
+  ctx.fillStyle = "#0d0a1c";
+  var bx = [0,72,152,236,320,410,500,592,672];
+  for(var i=0;i<bx.length;i++){
+    var h = 86 + ((i*53)%64);
+    ctx.fillRect(bx[i], 150-h, 64, h);
+  }
+  ctx.fillStyle = "rgba(240,185,90,.30)";
+  for(var i=0;i<bx.length;i++){
+    for(var r=0;r<3;r++){
+      if(((i*7+r*3)%4)===0) ctx.fillRect(bx[i]+14+r*15, 150-(86+((i*53)%64))+16+r*22, 7, 10);
+    }
+  }
+
+  // statue
+  var sx = 140, sy = 250;
+  ctx.fillStyle = "#241c44";
+  ctx.fillRect(sx-32, sy-16, 64, 16);
+  ctx.fillRect(sx-15, sy-112, 30, 96);
+  ctx.beginPath(); ctx.arc(sx, sy-130, 23, 0, 6.283); ctx.fill();
+  ctx.fillStyle = "#120d22";
+  ctx.beginPath(); ctx.ellipse(sx, sy-132, 14, 16, 0, 0, 6.283); ctx.fill();
+
+  // fountain
+  var fx = 430, fy = 285;
+  ctx.fillStyle = "#241c44";
+  ctx.beginPath(); ctx.ellipse(fx, fy, 82, 25, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = "#0c0918";
+  ctx.beginPath(); ctx.ellipse(fx, fy-3, 70, 19, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = "#2b2252"; ctx.fillRect(fx-7, fy-58, 14, 54);
+  ctx.beginPath(); ctx.ellipse(fx, fy-60, 24, 8, 0, 0, 6.283); ctx.fill();
+
+  // coat stall
+  var cx = 612;
+  ctx.fillStyle = "#2a2038"; ctx.fillRect(cx-46, 205, 92, 52);
+  ctx.fillStyle = "#3a2a1c";
+  ctx.beginPath();
+  ctx.moveTo(cx-56,205); ctx.lineTo(cx+56,205);
+  ctx.lineTo(cx+42,182); ctx.lineTo(cx-42,182); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#f0b95a";
+  ctx.beginPath(); ctx.arc(cx, 196, 4+Math.sin(T/300)*1, 0, 6.283); ctx.fill();
+
+  // fading street on the right
+  ctx.fillStyle = "rgba(7,6,15," + (0.5+0.18*Math.sin(T/900)) + ")";
+  ctx.fillRect(700, 0, 20, 380);
+}
+
+function drawMarket(){
+  var cols = ["#2b2038","#241a30","#2b2038"];
+  for(var i=0;i<3;i++){
+    var x = 40 + i*215;
+    ctx.fillStyle = cols[i];
+    ctx.fillRect(x, 150, 165, 110);
+    ctx.fillStyle = i===1 ? "#3a2a1c" : "#33243f";
+    ctx.beginPath();
+    ctx.moveTo(x-12,150); ctx.lineTo(x+177,150);
+    ctx.lineTo(x+158,118); ctx.lineTo(x+7,118); ctx.closePath(); ctx.fill();
+
+    for(var j=0;j<4;j++){
+      var jx = x+24+j*36, jy = 162;
+      ctx.strokeStyle = "rgba(240,185,90,.4)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(jx,118); ctx.lineTo(jx,jy); ctx.stroke();
+      ctx.fillStyle = ["#8b5cf6","#4ade80","#f0b95a","#60a5fa"][j];
+      ctx.globalAlpha = .5;
+      ctx.beginPath(); ctx.arc(jx, jy+10, 8, 0, 6.283); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    var lx = x+82, ly = 105;
+    var rg = ctx.createRadialGradient(lx,ly,2,lx,ly,115);
+    rg.addColorStop(0,"rgba(240,185,90,.5)"); rg.addColorStop(1,"rgba(240,185,90,0)");
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(lx,ly,115,0,6.283); ctx.fill();
+  }
+
+  // counter
+  ctx.fillStyle = "#1a1330"; ctx.fillRect(380,300,180,50);
+  ctx.strokeStyle = "#8b5cf6"; ctx.lineWidth = 1.5; ctx.strokeRect(380,300,180,50);
+  ctx.fillStyle = "#e9e6ff"; ctx.save(); ctx.translate(470,312); ctx.rotate(-0.05);
+  ctx.fillRect(-32,-8,64,16); ctx.restore();
+
+  // back room door
+  ctx.fillStyle = "#1b1436"; ctx.fillRect(636,160,52,96);
+  ctx.strokeStyle = "#f0b95a"; ctx.lineWidth = 2; ctx.strokeRect(636,160,52,96);
+  ctx.beginPath(); ctx.arc(678,208,4,0,6.283); ctx.fillStyle="#f0b95a"; ctx.fill();
+}
+
+function drawArchive(){
+  for(var s=0;s<4;s++){
+    var x = 30 + s*178;
+    ctx.fillStyle = "#0d2430"; ctx.fillRect(x, 40, 150, 200);
+    for(var r=0;r<4;r++){
+      var y = 58 + r*48;
+      ctx.fillStyle = "#123040"; ctx.fillRect(x+6, y, 138, 6);
+      for(var b=0;b<7;b++){
+        var bh = 24 + ((b*13+s*7)%15);
+        ctx.fillStyle = ["#1d4a5c","#256070","#1a4252"][(b+s)%3];
+        ctx.fillRect(x+10+b*19, y-bh, 14, bh);
+      }
+    }
+  }
+  var wl = 250 + Math.sin(T/700)*4;
+  var wg = ctx.createLinearGradient(0,wl,0,380);
+  wg.addColorStop(0,"rgba(56,140,160,.32)"); wg.addColorStop(1,"rgba(10,40,52,.6)");
+  ctx.fillStyle = wg; ctx.fillRect(0,wl,720,380-wl);
+  ctx.strokeStyle = "rgba(120,220,240,.5)"; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for(var q=0;q<=720;q+=12) ctx.lineTo(q, wl + Math.sin(q/45 + T/500)*3);
+  ctx.stroke();
+
+  // ledger on a plinth
+  ctx.fillStyle = "#123040"; ctx.fillRect(176,262,50,22);
+  if(!E_evi(S,"ledger")){
+    ctx.save(); ctx.translate(200,258); ctx.rotate(-0.04);
+    ctx.fillStyle = "#e6d9a8"; ctx.fillRect(-30,-11,60,22);
+    ctx.strokeStyle = "#8a7a4a"; ctx.strokeRect(-30,-11,60,22);
+    ctx.restore();
+    ctx.fillStyle = "rgba(240,185,90," + (0.25+0.2*Math.sin(T/400)) + ")";
+    ctx.beginPath(); ctx.arc(200,258,42,0,6.283); ctx.fill();
+  }
+}
+
+function drawTower(){
+  // stars
+  ctx.fillStyle = "#cfc9ff";
+  for(var i=0;i<46;i++){
+    var sx = (i*141)%720, sy = (i*73)%170;
+    ctx.globalAlpha = 0.2 + 0.5*Math.abs(Math.sin(T/900 + i));
+    ctx.fillRect(sx, sy, 1.6, 1.6);
+  }
+  ctx.globalAlpha = 1;
+
+  // tower
+  var cx = 360;
+  ctx.fillStyle = "#0c0a1c";
+  ctx.beginPath();
+  ctx.moveTo(cx-92,380); ctx.lineTo(cx-68,58); ctx.lineTo(cx-44,32);
+  ctx.lineTo(cx,14); ctx.lineTo(cx+44,32); ctx.lineTo(cx+68,58);
+  ctx.lineTo(cx+92,380); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "rgba(139,92,246,.38)"; ctx.lineWidth = 1.4; ctx.stroke();
+
+  // door
+  ctx.fillStyle = S.loan ? "#2a1020" : "#1b1636";
+  ctx.beginPath();
+  ctx.moveTo(cx-28,380); ctx.lineTo(cx-28,320);
+  ctx.quadraticCurveTo(cx,282,cx+28,320);
+  ctx.lineTo(cx+28,380); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = S.loan ? "#f87171" : "#f0b95a"; ctx.lineWidth = 2; ctx.stroke();
+
+  // seal on the door
+  ctx.save(); ctx.translate(cx, 322);
+  ctx.strokeStyle = S.loan ? "#f87171" : "#f0b95a"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0,0,13,0,6.283); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-8,0); ctx.lineTo(8,0); ctx.moveTo(0,-8); ctx.lineTo(0,8); ctx.stroke();
+  ctx.restore();
+
+  // bell
+  var ringing = S.ended === "win";
+  var sway = ringing ? Math.sin(T/70)*0.4 : Math.sin(T/1600)*0.03;
+  ctx.save(); ctx.translate(cx, 96); ctx.rotate(sway);
+  ctx.fillStyle = "#f0b95a";
+  ctx.beginPath();
+  ctx.moveTo(-28,24); ctx.quadraticCurveTo(-28,-13,0,-17);
+  ctx.quadraticCurveTo(28,-13,28,24); ctx.lineTo(32,28); ctx.lineTo(-32,28); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#c98f36"; ctx.fillRect(-34,28,68,6);
+  ctx.fillStyle = "#8a6320"; ctx.beginPath(); ctx.arc(0,35,6,0,6.283); ctx.fill();
+  ctx.restore();
+
+  if(ringing){
+    for(var k=0;k<3;k++){
+      var rr = ((T/6 + k*45)%130);
+      ctx.strokeStyle = "rgba(240,185,90," + (1-rr/130)*0.65 + ")";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx,120,rr+20,-0.9,0.9); ctx.stroke();
+    }
+  }
+}
+
+function drawSpots(){
+  var list = spotsIn(S.area);
+  for(var i=0;i<list.length;i++){
+    var sp = list[i];
+    var pulse = 0.45 + 0.35*Math.sin(T/340 + i);
+    var col = sp.kind === "exit" ? "#8b5cf6"
+            : sp.kind === "npc" ? "#f0b95a" : "#6fd8e8";
+    if(sp.kind === "exit"){
+      var g = E_gate(S, sp.to);
+      if(!g.ok) col = "#f87171";
+    }
+    ctx.globalAlpha = pulse * 0.85;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.ellipse(sp.x, sp.y + 8, sp.r*0.72, sp.r*0.3, 0, 0, 6.283);
+    ctx.fill();
+    ctx.globalAlpha = pulse;
+    ctx.beginPath(); ctx.arc(sp.x, sp.y - 6, 3.2, 0, 6.283); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawPlayer(){
+  var x = player.x, y = player.y;
+  var bob = player.moving ? Math.sin(player.bob) * 1.6 : 0;
+
+  ctx.globalAlpha = .3;
+  ctx.fillStyle = "#000";
+  ctx.beginPath(); ctx.ellipse(x, y+8, 10, 4, 0, 0, 6.283); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // cloak
+  ctx.fillStyle = "#2c2450";
+  ctx.beginPath();
+  ctx.moveTo(x-9, y+7);
+  ctx.quadraticCurveTo(x-7, y-14+bob, x, y-17+bob);
+  ctx.quadraticCurveTo(x+7, y-14+bob, x+9, y+7);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#6d5bc4"; ctx.lineWidth = 1.2; ctx.stroke();
+
+  // head
+  ctx.fillStyle = "#d9d2ff";
+  ctx.beginPath(); ctx.arc(x, y-19+bob, 4.4, 0, 6.283); ctx.fill();
+
+  // facing
+  ctx.fillStyle = "#8b5cf6";
+  ctx.beginPath(); ctx.arc(x + player.face*2.2, y-19+bob, 1.3, 0, 6.283); ctx.fill();
+
+  // the memory lantern they carry
+  var glow = 0.35 + 0.25*Math.sin(T/420);
+  var rg = ctx.createRadialGradient(x, y-6+bob, 1, x, y-6+bob, 34);
+  rg.addColorStop(0, "rgba(240,185,90," + glow + ")");
+  rg.addColorStop(1, "rgba(240,185,90,0)");
+  ctx.fillStyle = rg;
+  ctx.beginPath(); ctx.arc(x, y-6+bob, 34, 0, 6.283); ctx.fill();
+  ctx.fillStyle = "#f0b95a";
+  ctx.beginPath(); ctx.arc(x+7, y-4+bob, 2.2, 0, 6.283); ctx.fill();
+}
+
+function drawMotes(){
+  for(var i=0;i<motes.length;i++){
+    var m = motes[i];
+    m.y -= m.v * 0.012;
+    m.x += Math.sin((m.y+i*40)/60)*0.2;
+    if(m.y < -4){ m.y = 384; m.x = Math.random()*720; }
+    ctx.globalAlpha = 0.32;
+    ctx.fillStyle = S.area === "market" ? "#f0b95a" : "#b9a8ff";
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, 6.283); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------------- loop ---------------- */
+
+var last = performance.now();
+function frame(now){
+  var dt = Math.min(0.05, (now - last)/1000);
+  last = now; T = now;
+
+  if(S.started && !S.ended) movePlayer(dt);
+  tick(dt*1000);
+
+  if(S.started){
+    drawArea();
+    drawMotes();
+    drawSpots();
+    drawPlayer();
+    NEAR = nearestSpot();
+  } else {
+    drawArea();
+    drawMotes();
+    drawSpots();
+  }
+  updateHud();
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- input ---------------- */
+
+window.addEventListener("keydown", function(e){
+  var k = e.key.toLowerCase();
+  if(["arrowup","arrowdown","arrowleft","arrowright"," "].indexOf(k) >= 0) e.preventDefault();
+  keys[k] = true;
+  if(k === "e" || k === " "){
+    if(!$("loanModal").classList.contains("hidden")) return;
+    interact();
+  }
+});
+window.addEventListener("keyup", function(e){
+  keys[e.key.toLowerCase()] = false;
+});
+
+cv.addEventListener("pointerdown", function(e){
+  if(!S.started || S.ended) return;
+  var r = cv.getBoundingClientRect();
+  var mx = (e.clientX - r.left) * (cv.width / r.width);
+  var my = (e.clientY - r.top) * (cv.height / r.height);
+
+  // click a spot directly
+  var list = spotsIn(S.area);
+  for(var i=0;i<list.length;i++){
+    var sp = list[i];
+    if(Math.hypot(mx - sp.x, my - sp.y) < sp.r * 1.5){
+      player.tx = sp.x;
+      player.ty = sp.y + 6;
+      // if already close enough, interact
+      if(Math.hypot(player.x - sp.x, player.y - sp.y) < sp.r) interact();
+      return;
+    }
+  }
+  player.tx = mx; player.ty = my;
+});
+
+/* ---------------- tests ---------------- */
+
+function runTests(){
+  var out = [];
+  function t(name, fn){
+    try { out.push({name:name, pass:!!fn()}); }
+    catch(err){ out.push({name:name, pass:false, err:String(err)}); }
+  }
+
+  t("cannot pledge all three", function(){
+    var x = E_new();
+    var r = E_takeLoan(x, ["voice","home","love"]);
+    return !r.ok && x.pledged.length === 0;
+  });
+
+  t("collateral must reach 500", function(){
+    var x = E_new();
+    var r = E_takeLoan(x, ["home","voice"]); // 200+300 = 500
+    var y = E_new();
+    var r2 = E_takeLoan(y, ["home"]); // 200
+    return r.ok && !r2.ok;
+  });
+
+  t("pledged memory capability is unavailable", function(){
+    var x = E_new();
+    E_takeLoan(x, ["voice","home"]);
+    return !E_cap(x,"listen") && !E_cap(x,"recall") && E_cap(x,"trust");
+  });
+
+  t("interest compounds exactly once per cycle", function(){
+    var x = E_new();
+    E_takeLoan(x, ["voice","home"]);
+    var before = x.debt;
+    E_accrue(x);
+    var once = x.debt;
+    E_accrue(x);
+    return once === Math.round(LOAN.principal*1.1) && x.debt === Math.round(once*1.1) && before === LOAN.principal;
+  });
+
+  t("repayment restores memories and clears balance", function(){
+    var x = E_new();
+    E_takeLoan(x, ["voice","home"]);
+    x.money = 5000;
+    var r = E_repay(x);
+    return r.ok && x.debt === 0 && x.loan === null &&
+           x.pledged.length === 0 && E_cap(x,"listen") && E_cap(x,"recall");
+  });
+
+  t("repayment blocked when funds are short", function(){
+    var x = E_new();
+    E_takeLoan(x, ["voice","home"]);
+    x.money = 10;
+    var r = E_repay(x);
+    return !r.ok && x.loan !== null;
+  });
+
+  t("repossession takes the highest-value collateral permanently", function(){
+    var x = E_new();
+    E_takeLoan(x, ["love","home"]); // 400 + 200
+    var r = E_repossess(x);
+    return r.id === "love" && x.repossessed.indexOf("love") >= 0 &&
+           x.pledged.indexOf("love") < 0 && !E_cap(x,"trust");
+  });
+
+  t("repossessed memory cannot be repaid back", function(){
+    var x = E_new();
+    E_takeLoan(x, ["love","home"]);
+    E_repossess(x);
+    x.money = 5000;
+    E_repay(x);
+    return x.repossessed.indexOf("love") >= 0 && !E_has(x,"love");
+  });
+
+  t("each single-memory-kept path can reach 2 evidence", function(){
+    // keep voice -> inscription + confession
+    var a = E_new(); a.started = true;
+    E_takeLoan(a, ["home","love"]);
+    a.money = 9999; E_repay(a);
+    E_interact(a,"statue"); E_interact(a,"seller");
+    // keep home -> inscription + ledger + testimony
+    var b = E_new(); b.started = true;
+    E_takeLoan(b, ["voice","love"]);
+    b.money = 9999; E_repay(b);
+    E_interact(b,"statue"); E_interact(b,"ledger"); E_interact(b,"shelves");
+    // keep love -> inscription + confession + contract
+    var c = E_new(); c.started = true;
+    E_takeLoan(c, ["voice","home"]);
+    c.money = 9999; E_repay(c);
+    E_interact(c,"statue"); E_interact(c,"seller"); E_interact(c,"backroom");
+    return a.evidence.length >= 2 && b.evidence.length >= 2 && c.evidence.length >= 2;
+  });
+
+  t("locked capability reports a reason instead of acting", function(){
+    var x = E_new(); x.started = true;
+    x.pledged = ["love"];
+    var r = E_interact(x,"backroom"); // needs love
+    var y = E_new(); y.started = true;
+    var ok = E_interact(y,"seller");  // needs voice or love, both held
+    return !r.ok && /cannot/i.test(r.msg) && ok.ok;
+  });
+
+  t("tower entry denied only when every memory is gone", function(){
+    var x = E_new(); x.area="square";
+    x.pledged = ["voice","home","love"];
+    var g = E_gate(x,"tower");
+    var y = E_new();
+    y.pledged = ["voice","home"];
+    var g2 = E_gate(y,"tower");
+    return !g.ok && g2.ok;
+  });
+
+  t("cannot win before settling the loan", function(){
+    var x = E_new(); x.started = true; x.area = "tower"; x.tookLoan = true;
+    x.pledged = ["voice","home"]; x.sealPaid = true;
+    x.loan = {principal:400, balance:400, takenAt:0};
+    x.debt = 400;
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"}];
+    return !E_win(x).ok;
+  });
+
+  t("seal fee is required, charged exactly once", function(){
+    var x = E_new(); x.started = true; x.area = "tower"; x.tookLoan = true;
+    x.sealPaid = false; x.money = 1000;
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"}];
+    var blocked = !E_win(x).ok;          // unpaid seal blocks
+    var pay = E_paySeal(x);
+    var after = x.money;
+    var again = E_paySeal(x);
+    return blocked && pay.ok && after === 1000 - SEAL_FEE && !again.ok && E_win(x).ok;
+  });
+
+  t("inconsistent debt blocks the win even with no loan object", function(){
+    var x = E_new(); x.started = true; x.area = "tower"; x.tookLoan = true;
+    x.loan = null; x.debt = 120; x.sealPaid = true;
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"}];
+    return !E_win(x).ok;
+  });
+
+  t("cannot win without evidence", function(){
+    var x = E_new(); x.started = true; x.area = "tower";
+    x.tookLoan = true; x.loan = null; x.debt = 0;
+    return !E_win(x).ok;
+  });
+
+  t("cannot win without ever borrowing", function(){
+    var x = E_new(); x.started = true; x.area = "tower";
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"}];
+    return !E_win(x).ok;
+  });
+
+  t("winning after clean settlement yields a positive ending", function(){
+    var x = E_new(); x.started = true; x.area = "tower";
+    x.tookLoan = true; x.loan = null; x.debt = 0; x.sealPaid = true;
+    x.evidence = [{id:"a",name:"A"},{id:"b",name:"B"},{id:"c",name:"C"}];
+    if(!E_win(x).ok) return false;
+    x.ended = "win";
+    var e = E_ending(x);
+    return e === "remembered" || e === "newledger";
+  });
+
+  t("remaining one memory is enough to reach the tower", function(){
+    var x = E_new(); x.started = true;
+    x.pledged = ["voice","home"];        // love remains
+    return E_gate(x,"tower").ok && !E_gate(x,"tower").msg;
+  });
+
+  var pass = out.filter(function(o){ return o.pass; }).length;
+  return {results:out, pass:pass, total:out.length};
+}
+
+/* ---------------- boot ---------------- */
+
+$("btnStart").onclick = function(){
+  S.started = true;
+  $("intro").classList.add("hidden");
+  setArea("square");
+  narr("Forty-one streets are already gone from everyone but you.");
+  narr("The Bell Tower can ring them back. Its door opens for anything you still remember, but the Lender holds the seal.");
+  say("The Lender","Deal with me and I will release the bell when your account is square — for a seal fee of " + SEAL_FEE + " coin, paid at the door. And bring it something true to say.");
+  sys("Every memory is collateral and a capability. Walk with WASD, press E to act.");
+  renderAll();
+};
+
+$("btnAgain").onclick = function(){
+  S = E_new();
+  $("over").classList.add("hidden");
+  $("intro").classList.remove("hidden");
+  $("log").innerHTML = "";
+  player.x = 150; player.y = 330; player.tx = player.ty = null;
+  renderAll();
+};
+
+$("hReset").onclick = function(){ $("btnAgain").onclick(); };
+
+$("hTests").onclick = function(){
+  var r = runTests();
+  sys("SELF-TEST: " + r.pass + "/" + r.total + " passed");
+  r.results.forEach(function(o){
+    log((o.pass ? '<span style="color:#4ade80">PASS</span> ' : '<span style="color:#f87171">FAIL</span> ') + o.name);
+  });
+};
+
+setArea("square");
+renderAll();
+requestAnimationFrame(frame);
+
+/* expose for automated checking */
+window.LACUNA = {
+  state: function(){ return S; },
+  engine: { new:E_new, loan:E_takeLoan, accrue:E_accrue, repay:E_repay,
+            repo:E_repossess, gate:E_gate, win:E_win, ending:E_ending,
+            interact:E_interact, held:E_held, cap:E_cap, seal:E_paySeal },
+  tests: runTests,
+  config: LOAN,
+  paint: function(){
+    drawArea(); drawMotes(); drawSpots();
+    if(S.started) drawPlayer();
+    updateHud();
+    return true;
+  },
+  goto: function(area){
+    S.area = area;
+    player.x = AREAS[area].start.x;
+    player.y = AREAS[area].start.y;
+    player.tx = player.ty = null;
+    $("locName").textContent = AREAS[area].name;
+    drawArea(); drawMotes(); drawSpots(); drawPlayer(); updateHud();
+    return true;
+  },
+  advance: function(ms){
+    var step = 16, left = ms;
+    while(left > 0){
+      var dt = Math.min(step, left)/1000;
+      if(S.started && !S.ended) movePlayer(dt);
+      tick(dt*1000);
+      left -= step;
+    }
+    NEAR = nearestSpot();
+    drawArea(); drawMotes(); drawSpots();
+    if(S.started) drawPlayer();
+    updateHud();
+    return { x: Math.round(player.x), y: Math.round(player.y), near: NEAR ? NEAR.id : null };
+  },
+  keys: keys,
+  player: function(){ return player; }
+};
 </script>
 </body>
 </html>
