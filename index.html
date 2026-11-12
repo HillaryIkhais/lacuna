@@ -204,7 +204,9 @@ canvas#world{display:block;width:100%;height:100%;cursor:crosshair}
     <div id="hint"></div>
 
     <div id="title">
-      <div class="title-art" id="titleArt"></div>
+      <div class="title-art" id="titleArt">
+        <canvas id="titleCanvas" width="700" height="360"></canvas>
+      </div>
       <h2>Zoud GameLab 2026</h2>
       <h1>LACUNA</h1>
       <p>Memories are collateral. Memories are capabilities. <br>What you pledge to borrow, you lose the power to use.</p>
@@ -1597,6 +1599,69 @@ function drawMotes(){
   ctx.globalAlpha = 1;
 }
 
+function drawTitleArt(){
+  var tc = document.getElementById("titleCanvas");
+  var tctx = tc.getContext("2d");
+  tctx.clearRect(0,0,tc.width,tc.height);
+
+  // sky gradient
+  var g = tctx.createLinearGradient(0,0,0,tc.height);
+  g.addColorStop(0,"#0a0816"); g.addColorStop(0.5,"#1a1430"); g.addColorStop(1,"#0c091c");
+  tctx.fillStyle = g; tctx.fillRect(0,0,tc.width,tc.height);
+
+  // distant mountains
+  tctx.fillStyle = "#140e24";
+  tctx.beginPath();
+  tctx.moveTo(0,tc.height);
+  tctx.lineTo(100,200); tctx.lineTo(220,280); tctx.lineTo(340,190);
+  tctx.lineTo(460,260); tctx.lineTo(580,170); tctx.lineTo(700,240);
+  tctx.lineTo(700,tc.height); tctx.closePath(); tctx.fill();
+
+  // tower silhouette
+  tctx.fillStyle = "#0a0816";
+  tctx.beginPath();
+  tctx.moveTo(520,tc.height);
+  tctx.lineTo(500,140); tctx.lineTo(470,90); tctx.lineTo(455,60);
+  tctx.lineTo(440,90); tctx.lineTo(410,140); tctx.lineTo(390,tc.height);
+  tctx.closePath(); tctx.fill();
+
+  // stars
+  tctx.fillStyle = "#d8d2e8";
+  for(var i=0;i<50;i++){
+    var sx=(i*137)%700, sy=(i*79)%260;
+    tctx.globalAlpha=0.2+0.6*Math.abs(Math.sin(T/1000+i));
+    tctx.fillRect(sx,sy,1.6,1.6);
+  }
+  tctx.globalAlpha=1;
+
+  // moon
+  var moonG = tctx.createRadialGradient(560,80,2,560,80,50);
+  moonG.addColorStop(0,"rgba(224,200,240,0.6)"); moonG.addColorStop(1,"rgba(224,200,240,0)");
+  tctx.fillStyle=moonG; tctx.beginPath(); tctx.arc(560,80,50,0,6.283); tctx.fill();
+
+  // glowing window in tower
+  tctx.fillStyle="#f4c77a";
+  tctx.beginPath(); tctx.arc(445,75,7,0,6.283); tctx.fill();
+  tctx.shadowColor="#f4c77a"; tctx.shadowBlur=12;
+  tctx.beginPath(); tctx.arc(445,75,7,0,6.283); tctx.fill(); tctx.shadowBlur=0;
+
+  // lantern light glow at bottom
+  var lg = tctx.createLinearGradient(0,tc.height-100,0,tc.height);
+  lg.addColorStop(0,"rgba(224,184,102,0.15)"); lg.addColorStop(1,"rgba(224,184,102,0)");
+  tctx.fillStyle=lg; tctx.fillRect(0,tc.height-100,700,100);
+
+  // memory fragments floating
+  tctx.fillStyle="#e0b866";
+  for(var i=0;i<6;i++){
+    var fx=100+i*110, fy=200+Math.sin(T/500+i)*20;
+    tctx.globalAlpha=0.4+0.4*Math.sin(T/400+i);
+    tctx.beginPath(); tctx.arc(fx,fy,6,0,6.283); tctx.fill();
+    tctx.shadowColor="#e0b866"; tctx.shadowBlur=8;
+    tctx.beginPath(); tctx.arc(fx,fy,6,0,6.283); tctx.fill(); tctx.shadowBlur=0;
+  }
+  tctx.globalAlpha=1;
+}
+
 function drawMemories(){
   var held = E_held(S);
   var baseX = W/2 - 110;
@@ -1679,7 +1744,7 @@ function frame(now){
     drawPlayer();
     NEAR = nearestSpot();
   } else {
-    drawArea();
+    drawTitleArt();
     drawMotes();
     drawSpots();
   }
