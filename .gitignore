@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Video production intermediate files
+video-production/scenes/
+video-production/output/
+video-production/dist/
+
+# Audio temp files
+video-production/audio/*:!LACUNA_113.wav
+video-production/*.m4a
+video-production/*_test.wav
+
+# Scripts (keep source)
+video-production/render_cinematic.py
+video-production/build_render_cmd.py
+
+# Generated PNGs (keep MP4s)
+video-production/captures/
