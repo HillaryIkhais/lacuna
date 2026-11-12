@@ -5,11 +5,21 @@ node_modules/
 video-production/scenes/
 video-production/output/
 video-production/dist/
+video-production/film/frames/
+video-production/film/__pycache__/
 
 # Audio temp files
 video-production/audio/*:!LACUNA_113.wav
 video-production/*.m4a
 video-production/*_test.wav
+video-production/final_audio.wav
+video-production/mixed_audio.wav
+video-production/narration.wav
+video-production/narration.aiff
+video-production/narration.m4a
+video-production/soundtrack.wav
+video-production/lacuna_product_demo.mp4
+video-production/out/lacuna_raw.mp4
 
 # Scripts (keep source)
 video-production/render_cinematic.py
