@@ -289,15 +289,18 @@ var MEMIDS = ["voice","home","love"];
 var MEM = {
   voice: { id:"voice", name:"Mother's Voice", value:300, cap:"listen",
     ability:"Hear what is meant, not what is said.",
-    lost:"Echoes fall silent for you.",
+    income:"The Seller pays you in full (+200) only if you can hear the truth beneath the lie.",
+    lost:"Echoes fall silent for you. The Seller's commission is lost.",
     door:"The Bell Tower door remembers the hymn." },
   home: { id:"home", name:"Childhood Home", value:200, cap:"recall",
     ability:"Know erased routes and hidden ways down.",
-    lost:"Passages you knew are just walls now.",
+    income:"The Archive strongbox yields +250 — but only if you recognise its value.",
+    lost:"Passages you knew are just walls now. The Archive pays nothing.",
     door:"The stair into the Sunken Archive is your old cellar." },
   love: { id:"love", name:"The Face of Love", value:400, cap:"trust",
     ability:"Be recognised, and borrow on your word.",
-    lost:"People look straight through you.",
+    income:"The Lender's back room advances +100 to someone they recognise.",
+    lost:"People look straight through you. The back-room advance is lost.",
     door:"The back room opens for someone the Lender once trusted." }
 };
 
@@ -517,11 +520,12 @@ var INTER = {
 
   seller: {once:true, needAny:["voice","love"], run:function(St){
     var viaVoice = E_has(St,"voice");
-    St.money += 200;
+    var pay = viaVoice ? 200 : 100;
+    St.money += pay;
     St.evidence.push({id:"confession", name:"The Seller's Confession"});
     if(viaVoice)
-      return {msg:"You hear what he <i>means</i> under the lie, and he cannot keep it up. <i>'The Lender carried the last street out in a jar.'</i> +200 coin. Evidence: The Seller's Confession.", cls:"good"};
-    return {msg:"He trusts you, so he says it plainly. <i>'The Lender carried the last street out in a jar.'</i> +200 coin. Evidence: The Seller's Confession.", cls:"good"};
+      return {msg:"You hear what he <i>means</i> under the lie, and he cannot keep it up. <i>'The Lender carried the last street out in a jar.'</i> +" + pay + " coin. Evidence: The Seller's Confession.", cls:"good"};
+    return {msg:"He trusts you, so he says it plainly. <i>'The Lender carried the last street out in a jar.'</i> +" + pay + " coin. Evidence: The Seller's Confession.", cls:"good"};
   }},
 
   counter: {run:function(St){
@@ -533,14 +537,15 @@ var INTER = {
   backroom: {needAny:["love"], run:function(St){
     if(E_evi(St,"contract")) return {msg:"You have already read the original. It has not changed."};
     St.evidence.push({id:"contract", name:"The Original Contract"});
-    return {msg:"The original is not a loan. It is a <b>deed</b>. The whole district was pledged by someone who was never asked. Evidence: The Original Contract.", cls:"good"};
+    St.money += 100;
+    return {msg:"The original is not a loan. It is a <b>deed</b>. The whole district was pledged by someone who was never asked. The Lender advances +100 to someone they recognise. Evidence: The Original Contract.", cls:"good"};
   }},
 
-  ledger: {run:function(St){
+  ledger: {needAny:["home"], run:function(St){
     if(E_evi(St,"ledger")) return {msg:"You have already copied the ledger."};
     St.evidence.push({id:"ledger", name:"The Ledger of Erasures"});
     St.money += 250;
-    return {msg:"Forty-one streets, in the Lender's own hand. The Forgotten Square is number forty-two. +250 coin from the strongbox. Evidence: The Ledger of Erasures.", cls:"good"};
+    return {msg:"Forty-one streets, in the Lender's own hand. The Forgotten Square is number forty-two. You recognise its value. +250 coin from the strongbox. Evidence: The Ledger of Erasures.", cls:"good"};
   }},
 
   shelves: {run:function(St){
@@ -765,7 +770,7 @@ function renderLoan(){
     var on = sel.indexOf(id) !== -1;
     var el = document.createElement("div");
     el.className = "popt" + (on ? " on" : "");
-    el.innerHTML = '<span><b style="color:#fff">'+m.name+'</b><br><span style="font-size:10px;color:#948bc4">'+m.ability+'</span></span>'+
+    el.innerHTML = '<span><b style="color:#fff">'+m.name+'</b><br><span style="font-size:10px;color:#948bc4">'+m.ability+'</span><br><span style="font-size:10px;color:#e0b866">'+m.income+'</span></span>'+
                    '<span class="v">'+m.value+'</span>';
     el.onclick = function(){
       var i = sel.indexOf(id);
